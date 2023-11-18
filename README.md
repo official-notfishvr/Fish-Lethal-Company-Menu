@@ -1,6 +1,7 @@
 # Lethal-Company-Mod-Menu
 This Is Lethal Company Mod Menu
 
+## Installation Guide
 
 ### Option 1: Clone the Repository
 
