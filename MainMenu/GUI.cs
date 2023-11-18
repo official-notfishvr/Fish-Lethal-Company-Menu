@@ -21,6 +21,7 @@ namespace NIKO_Menu_V2.MainMenu
     [BepInPlugin("NIKO.GUI", "NIKO", "1.0")]
     internal class MainGUI : BaseUnityPlugin
     {
+        public static bool Doonce = false;
         private void DrawComputerTab()
         {
             scrollPosition = GUILayout.BeginScrollView(scrollPosition);
@@ -32,6 +33,8 @@ namespace NIKO_Menu_V2.MainMenu
             ToggleComputer[5] = ToggleButton("Fly", ToggleComputer[5]);
             ToggleComputer[6] = ToggleButton("SpawnBody", ToggleComputer[6]);
             ToggleComputer[7] = ToggleButton("Explosion", ToggleComputer[7]);
+            ToggleComputer[8] = ToggleButton("Tpall", ToggleComputer[8]);
+            ToggleComputer[9] = ToggleButton("Giveownership", ToggleComputer[9]);
 
             GUILayout.EndScrollView();
         }
@@ -49,9 +52,9 @@ namespace NIKO_Menu_V2.MainMenu
         }
         private void DrawPlayerListTab()
         {
-            _instance.scrollPosition = GUILayout.BeginScrollView(_instance.scrollPosition);
+            scrollPosition = GUILayout.BeginScrollView(scrollPosition);
 
-            GUILayout.EndVertical();
+            GUILayout.EndScrollView();
         }
         private void DrawSettingsTab()
         {
@@ -74,6 +77,7 @@ namespace NIKO_Menu_V2.MainMenu
                 playerRef.isSpeedCheating = false;
                 playerRef.sprintTime = int.MaxValue;
                 playerRef.sprintMeter = int.MaxValue;
+                playerRef.movementSpeed = 2f;
                 InfiniteSprint = true;
             }
             if (ToggleComputer[5])
@@ -119,9 +123,14 @@ namespace NIKO_Menu_V2.MainMenu
             }
             if (ToggleComputer[6])
             {
-                foreach (GameNetcodeStuff.PlayerControllerB ss in UnityEngine.Object.FindObjectsOfType<GameNetcodeStuff.PlayerControllerB>())
+                if (Doonce)
                 {
-                UnityEngine.Object.Instantiate(ss.playerRigidbody, ss.serverPlayerPosition, UnityEngine.Quaternion.identity);
+                    Doonce = true;
+                    foreach (GameNetcodeStuff.PlayerControllerB ss in UnityEngine.Object.FindObjectsOfType<GameNetcodeStuff.PlayerControllerB>())
+                    {
+                        PlayerControllerB component = ss.playersManager.allPlayerObjects[0].GetComponent<PlayerControllerB>();
+                        ss.SpawnDeadBody(ss.playersManager.thisClientPlayerId, new Vector3(0f, 10f, 0f), 0, component);
+                    }
                 }
             }
             if (ToggleComputer[7])
@@ -129,6 +138,21 @@ namespace NIKO_Menu_V2.MainMenu
                 foreach (GameNetcodeStuff.PlayerControllerB ss in UnityEngine.Object.FindObjectsOfType<GameNetcodeStuff.PlayerControllerB>())
                 {
                     Landmine.SpawnExplosion(ss.serverPlayerPosition, true, 999f, 999f);
+                }
+            }
+            if (ToggleComputer[8])
+            {
+                foreach (GameNetcodeStuff.PlayerControllerB ss in UnityEngine.Object.FindObjectsOfType<GameNetcodeStuff.PlayerControllerB>())
+                {
+                    PlayerControllerB component = ss.playersManager.allPlayerObjects[0].GetComponent<PlayerControllerB>();
+                    ss.TeleportPlayer(new Vector3(0f, float.NegativeInfinity, 0f), false, 0f, false, true);
+                }
+            }
+            if (ToggleComputer[9])
+            {
+                foreach (StartOfRound StartOfRound in UnityEngine.Object.FindObjectsOfType<StartOfRound>())
+                {
+                    StartOfRound.localPlayerController.GetComponent<NetworkObject>().ChangeOwnership(StartOfRound.localPlayerController.actualClientId);
                 }
             }
         }
@@ -313,6 +337,7 @@ namespace NIKO_Menu_V2.MainMenu
         public AudioReverbTrigger currentAudioTrigger;
         public KeyCode toggleKey = KeyCode.Insert;
         private int SpeedSelection = 0;
+        public static GameObject pointer;
         private string[] SpeedOptions = new string[] { "Slow", "Default", "Fast", "Super Fast", "FASTTTTTTTS" };
         private float[] SpeedValues = new float[] { 5.0f, 7.5f, 15.0f, 17.5f, 20.0f };
         private float Speed = 1.7f;
@@ -345,6 +370,32 @@ namespace NIKO_Menu_V2.MainMenu
         private Vector2 scrollPosition = Vector2.zero;
         #endregion
         #region Mods
+        public static void ExplosionPlayer()
+        {
+            Ray ray = Camera.main.ScreenPointToRay(UnityInput.Current.mousePosition);
+            RaycastHit raycastHit;
+            Physics.Raycast(ray.origin, ray.direction, out raycastHit);
+            if (pointer == null)
+            {
+                pointer = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                Object.Destroy(pointer.GetComponent<Rigidbody>());
+                Object.Destroy(pointer.GetComponent<SphereCollider>());
+                pointer.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
+            }
+            pointer.transform.position = raycastHit.point;
+            if (UnityInput.Current.GetMouseButton(0))
+            {
+                enableGod = true;
+                foreach (GameNetcodeStuff.PlayerControllerB ss in UnityEngine.Object.FindObjectsOfType<GameNetcodeStuff.PlayerControllerB>())
+                {
+                    Landmine.SpawnExplosion(ss.serverPlayerPosition, true, 999f, 999f);
+                }
+            } 
+            else
+            {
+                enableGod = false;
+            }
+        }
         public static void PermaLockDoor()
         {
             foreach (DoorLock s in UnityEngine.Object.FindObjectsOfType<DoorLock>())
