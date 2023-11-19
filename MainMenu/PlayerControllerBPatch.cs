@@ -7,7 +7,7 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace NIKO_Menu_V2.MainMenu
+namespace Lethal_Company_Mod_Menu.MainMenu
 {
     [HarmonyPatch(typeof(PlayerControllerB))]
     public class PlayerControllerBPatch : MonoBehaviour

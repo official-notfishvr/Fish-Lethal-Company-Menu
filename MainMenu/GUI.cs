@@ -16,25 +16,25 @@ using Color = UnityEngine.Color;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace NIKO_Menu_V2.MainMenu
+namespace Lethal_Company_Mod_Menu.MainMenu
 {
-    [BepInPlugin("NIKO.GUI", "NIKO", "1.0")]
+    [BepInPlugin("lethalcompany.GUI", "notfishvr", "1.0")]
     internal class MainGUI : BaseUnityPlugin
     {
         public static bool Doonce = false;
-        private void DrawComputerTab()
+        private void DrawMainTab()
         {
             scrollPosition = GUILayout.BeginScrollView(scrollPosition);
 
-            ToggleComputer[1] = ToggleButton("Night Vision", ToggleComputer[1]);
-            ToggleComputer[2] = ToggleButton("God Mode", ToggleComputer[2]);
-            ToggleComputer[3] = ToggleButton("Enemy Cant Be Spawned", ToggleComputer[3]);
-            ToggleComputer[4] = ToggleButton("Speed", ToggleComputer[4]);
-            ToggleComputer[5] = ToggleButton("Fly", ToggleComputer[5]);
-            ToggleComputer[6] = ToggleButton("SpawnBody", ToggleComputer[6]);
-            ToggleComputer[7] = ToggleButton("Explosion", ToggleComputer[7]);
-            ToggleComputer[8] = ToggleButton("Tpall", ToggleComputer[8]);
-            ToggleComputer[9] = ToggleButton("Giveownership", ToggleComputer[9]);
+            ToggleMain[1] = ToggleButton("Night Vision", ToggleMain[1]);
+            ToggleMain[2] = ToggleButton("God Mode", ToggleMain[2]);
+            ToggleMain[3] = ToggleButton("Enemy Cant Be Spawned", ToggleMain[3]);
+            ToggleMain[4] = ToggleButton("Speed", ToggleMain[4]);
+            ToggleMain[5] = ToggleButton("Fly", ToggleMain[5]);
+            ToggleMain[6] = ToggleButton("SpawnBody", ToggleMain[6]);
+            ToggleMain[7] = ToggleButton("Explosion", ToggleMain[7]);
+            ToggleMain[8] = ToggleButton("Tpall", ToggleMain[8]);
+            ToggleMain[9] = ToggleButton("Giveownership", ToggleMain[9]);
 
             GUILayout.EndScrollView();
         }
@@ -69,10 +69,10 @@ namespace NIKO_Menu_V2.MainMenu
         public void Update()
         {
             GUIToggleCheck();
-            if (ToggleComputer[1]) { nightVision = true; } else { nightVision = false; }
-            if (ToggleComputer[2]) { enableGod = true; } else { enableGod = false; }
-            if (ToggleComputer[3]) { EnemyCannotBeSpawned = true; } else { EnemyCannotBeSpawned = false; }
-            if (ToggleComputer[4])
+            if (ToggleMain[1]) { nightVision = true; } else { nightVision = false; }
+            if (ToggleMain[2]) { enableGod = true; } else { enableGod = false; }
+            if (ToggleMain[3]) { EnemyCannotBeSpawned = true; } else { EnemyCannotBeSpawned = false; }
+            if (ToggleMain[4])
             {
                 playerRef.isSpeedCheating = false;
                 playerRef.sprintTime = int.MaxValue;
@@ -80,7 +80,7 @@ namespace NIKO_Menu_V2.MainMenu
                 playerRef.movementSpeed = 2f;
                 InfiniteSprint = true;
             }
-            if (ToggleComputer[5])
+            if (ToggleMain[5])
             {
                 float Speed = this.Speed * Time.deltaTime;
                 foreach (GameNetcodeStuff.PlayerControllerB ss in UnityEngine.Object.FindObjectsOfType<GameNetcodeStuff.PlayerControllerB>())
@@ -121,7 +121,7 @@ namespace NIKO_Menu_V2.MainMenu
                     }
                 }
             }
-            if (ToggleComputer[6])
+            if (ToggleMain[6])
             {
                 if (Doonce)
                 {
@@ -133,14 +133,14 @@ namespace NIKO_Menu_V2.MainMenu
                     }
                 }
             }
-            if (ToggleComputer[7])
+            if (ToggleMain[7])
             {
                 foreach (GameNetcodeStuff.PlayerControllerB ss in UnityEngine.Object.FindObjectsOfType<GameNetcodeStuff.PlayerControllerB>())
                 {
                     Landmine.SpawnExplosion(ss.serverPlayerPosition, true, 999f, 999f);
                 }
             }
-            if (ToggleComputer[8])
+            if (ToggleMain[8])
             {
                 foreach (GameNetcodeStuff.PlayerControllerB ss in UnityEngine.Object.FindObjectsOfType<GameNetcodeStuff.PlayerControllerB>())
                 {
@@ -148,7 +148,7 @@ namespace NIKO_Menu_V2.MainMenu
                     ss.TeleportPlayer(new Vector3(0f, float.NegativeInfinity, 0f), false, 0f, false, true);
                 }
             }
-            if (ToggleComputer[9])
+            if (ToggleMain[9])
             {
                 foreach (StartOfRound StartOfRound in UnityEngine.Object.FindObjectsOfType<StartOfRound>())
                 {
@@ -164,7 +164,7 @@ namespace NIKO_Menu_V2.MainMenu
             Update();
             if (toggled)
             {
-                GUIRect = GUI.Window(69, GUIRect, OnGUI, "NIKO GUI | Toggle: " + toggleKey);
+                GUIRect = GUI.Window(69, GUIRect, OnGUI, "Lethal Company GUI | Toggle: " + toggleKey);
             }
         }
         public static void OnGUI(int windowId)
@@ -176,7 +176,7 @@ namespace NIKO_Menu_V2.MainMenu
 
             if (selectedTab == 0)
             {
-                _instance.DrawComputerTab();
+                _instance.DrawMainTab();
             }
             else if (selectedTab == 1)
             {
@@ -330,7 +330,6 @@ namespace NIKO_Menu_V2.MainMenu
         private Texture2D windowBackground;
         private Texture2D textArea, textAreaHovered, textAreaActive;
         private Texture2D box;
-        private Harmony harmony = new Harmony("NIKO.GUI.2");
         private static MainGUI _instance;
         private bool joining = false;
         public bool shouldSpawnEnemy;
@@ -352,9 +351,9 @@ namespace NIKO_Menu_V2.MainMenu
         private static SelectableLevel currentLevel;
         public static Rect GUIRect = new Rect(0, 0, 540, 240);
         private static int selectedTab = 0;
-        private static readonly string[] tabNames = { "Computer", "Mic Mods", "Menu Btns", "Player List", "Settings" };
+        private static readonly string[] tabNames = { "Main", "placeholder", "placeholder", "placeholder", "Settings" };
         private bool[] TogglePlayerList = new bool[999];
-        private bool[] ToggleComputer = new bool[999];
+        private bool[] ToggleMain = new bool[999];
         private bool[] ToggleMic = new bool[999];
         private bool toggled = true;
         public static Dictionary<SpawnableEnemyWithRarity, AnimationCurve> enemyPropCurves;

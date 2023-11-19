@@ -6,7 +6,7 @@ using System.Text;
 using Unity.Netcode;
 using UnityEngine;
 
-namespace NIKO_Menu_V2.MainMenu
+namespace Lethal_Company_Mod_Menu.MainMenu
 {
     internal class JoinGameAfteStart
     {

@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 using BepInEx;
 
-namespace NIKO_Menu_V2.MainMenu
+namespace Lethal_Company_Mod_Menu.MainMenu
 {
     #region Loader
-    [BepInPlugin("com.notfishvr.nikomenu", "notfishvr", "1.0.0")]
+    [BepInPlugin("com.notfishvr.lethalcompany", "notfishvr", "1.0.0")]
     public class Loader : BaseUnityPlugin
     {
         public void FixedUpdate()
@@ -12,8 +12,8 @@ namespace NIKO_Menu_V2.MainMenu
             if (!GameObject.Find("Loader"))
             {
                 GameObject Loader = new GameObject("Loader");
-                Loader.AddComponent<NIKO_Menu_V2.MainMenu.MainGUI>();
-                Loader.AddComponent<NIKO_Menu_V2.MainMenu.PlayerControllerBPatch>();
+                Loader.AddComponent<MainMenu.MainGUI>();
+                Loader.AddComponent<MainMenu.PlayerControllerBPatch>();
             }
         }
     }
