@@ -2,15 +2,20 @@
 using BepInEx.Configuration;
 using GameNetcodeStuff;
 using HarmonyLib;
+using LethalCompanyHacks.MainMenuPatch;
 using Steamworks.Data;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
 using Unity.Netcode;
 using Unity.Profiling;
 using Unity.Services.Authentication.Internal;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
+using UnityEngine.PlayerLoop;
+using UnityEngine.UIElements;
 using static UnityEngine.InputSystem.DefaultInputActions;
 using Color = UnityEngine.Color;
 using Object = UnityEngine.Object;
@@ -33,8 +38,8 @@ namespace Lethal_Company_Mod_Menu.MainMenu
             ToggleMain[5] = ToggleButton("Fly", ToggleMain[5]);
             ToggleMain[6] = ToggleButton("SpawnBody", ToggleMain[6]);
             ToggleMain[7] = ToggleButton("Explosion", ToggleMain[7]);
-            ToggleMain[8] = ToggleButton("Tpall", ToggleMain[8]);
-            ToggleMain[9] = ToggleButton("Giveownership", ToggleMain[9]);
+            ToggleMain[8] = ToggleButton("Infinite Sprint", ToggleMain[8]);
+            ToggleMain[9] = ToggleButton("Unlimited Item Power", ToggleMain[9]);
 
             GUILayout.EndScrollView();
         }
@@ -42,17 +47,61 @@ namespace Lethal_Company_Mod_Menu.MainMenu
         {
             scrollPosition = GUILayout.BeginScrollView(scrollPosition);
 
+            ToggleMic[1] = ToggleButton("Tp All", ToggleMic[1]);
+            ToggleMic[2] = ToggleButton("Give Ownership", ToggleMic[2]);
+            ToggleMic[3] = ToggleButton("Add Money", ToggleMic[3]);
+            ToggleMic[4] = ToggleButton("High Scrap Value", ToggleMic[4]);
+            ToggleMic[5] = ToggleButton("Unlimited Scan Range", ToggleMic[5]);
+            ToggleMic[6] = ToggleButton("Object ESP", ToggleMic[6]);
+            ToggleMic[7] = ToggleButton("Player ESP", ToggleMic[7]);
+            ToggleMic[8] = ToggleButton("Enemy ESP", ToggleMic[8]);
+            ToggleMic[9] = ToggleButton("Add 100k Cash", ToggleMic[9]);
+            ToggleMic[10] = ToggleButton("Remove 100k Cash", ToggleMic[10]);
+            ToggleMic[11] = ToggleButton("Remove Current Cash", ToggleMic[11]);
+            ToggleMic[12] = ToggleButton("Set Level High", ToggleMic[12]);
+
             GUILayout.EndScrollView();
         }
-        private void DrawMenuBtnTab()
+        private void DrawInfoTab()
         {
             scrollPosition = GUILayout.BeginScrollView(scrollPosition);
+
+            GUILayout.Label(logs);
+            if (HUDManager.Instance != null)
+            {
+                GUILayout.Label("Current XP: " + HUDManager.Instance.localPlayerXP.ToString());
+                GUILayout.Label("Current Level: " + HUDManager.Instance.localPlayerLevel.ToString());
+            } else { GUILayout.Label("Current XP: ???"); GUILayout.Label("Current Level: ???"); }
 
             GUILayout.EndScrollView();
         }
         private void DrawPlayerListTab()
         {
-            scrollPosition = GUILayout.BeginScrollView(scrollPosition);
+            _instance.scrollPosition = GUILayout.BeginScrollView(_instance.scrollPosition);
+            int num = 1;
+
+            foreach (PlayerControllerB playerControllerB in UnityEngine.Object.FindObjectsOfType<PlayerControllerB>())
+            {
+                string playerUsername = playerControllerB.playerUsername;
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Player " + num.ToString() + ": " + playerUsername);
+
+                if (GUILayout.Button("i", GUILayout.Width(20), GUILayout.Height(20))) { selectedPlayer = playerControllerB; playerManagerEnabled = true; }
+
+                GUILayout.EndHorizontal();
+
+                if (playerManagerEnabled && selectedPlayer == playerControllerB)
+                {
+                    if (GUILayout.Button("Kill")) { selectedPlayer.DamagePlayerFromOtherClientServerRpc(1000, new Vector3(0f, 0f, 0f), 0); }
+
+                    if (GUILayout.Button("TP")) { GameNetworkManager.Instance.localPlayerController.transform.position = selectedPlayer.transform.position; }
+
+                    if (GUILayout.Button("Back")) { selectedPlayer = null; playerManagerEnabled = false; }
+                }
+
+                num++;
+            }
 
             GUILayout.EndScrollView();
         }
@@ -69,16 +118,28 @@ namespace Lethal_Company_Mod_Menu.MainMenu
         public void Update()
         {
             GUIToggleCheck();
+            DeadBodyInfo[] DeadBodyInfo = Object.FindObjectsOfType(typeof(DeadBodyInfo)) as DeadBodyInfo[];
+            int num = DeadBodyInfo.Length;
+            if (num > numberDeadLastRound)
+            {
+                logs = logs + DeadBodyInfo[num - 1].playerScript.playerUsername + " has died!!!\n";
+                numberDeadLastRound++;
+            }
+
+            // Main
             if (ToggleMain[1]) { nightVision = true; } else { nightVision = false; }
-            if (ToggleMain[2]) { enableGod = true; } else { enableGod = false; }
+            if (ToggleMain[2]) { enableGod = true; /*localPlayerController.health = 100;*/  } else { enableGod = false; }
             if (ToggleMain[3]) { EnemyCannotBeSpawned = true; } else { EnemyCannotBeSpawned = false; }
             if (ToggleMain[4])
             {
-                playerRef.isSpeedCheating = false;
-                playerRef.sprintTime = int.MaxValue;
-                playerRef.sprintMeter = int.MaxValue;
-                playerRef.movementSpeed = 2f;
-                InfiniteSprint = true;
+                foreach (PlayerControllerB PlayerControllerB in UnityEngine.Object.FindObjectsOfType<PlayerControllerB>())
+                {
+                    PlayerControllerB.isSpeedCheating = false;
+                    PlayerControllerB.sprintTime = int.MaxValue;
+                    PlayerControllerB.sprintMeter = int.MaxValue;
+                    PlayerControllerB.movementSpeed = 10f;
+                    InfiniteSprint = true;
+                }
             }
             if (ToggleMain[5])
             {
@@ -140,7 +201,30 @@ namespace Lethal_Company_Mod_Menu.MainMenu
                     Landmine.SpawnExplosion(ss.serverPlayerPosition, true, 999f, 999f);
                 }
             }
-            if (ToggleMain[8])
+            if (ToggleMain[8]) 
+            { 
+                InfiniteSprint = true;
+                foreach (PlayerControllerB playerControllerB in UnityEngine.Object.FindObjectsOfType<PlayerControllerB>())
+                {
+                    playerControllerB.sprintTime = 9999f;
+                    playerControllerB.sprintMeter = 1f;
+                    playerControllerB.isExhausted = false;
+                }
+            }
+            else { InfiniteSprint = false; }
+            if (ToggleMain[9])
+            {
+                if (GameNetworkManager.Instance.localPlayerController.currentlyHeldObjectServer != null)
+                {
+                    if (GameNetworkManager.Instance.localPlayerController.IsServer)
+                    {
+                        GameNetworkManager.Instance.localPlayerController.currentlyHeldObjectServer.insertedBattery.charge = 1f;
+                    }
+                }
+            }
+
+            // Misc
+            if (ToggleMic[1])
             {
                 foreach (GameNetcodeStuff.PlayerControllerB ss in UnityEngine.Object.FindObjectsOfType<GameNetcodeStuff.PlayerControllerB>())
                 {
@@ -148,13 +232,96 @@ namespace Lethal_Company_Mod_Menu.MainMenu
                     ss.TeleportPlayer(new Vector3(0f, float.NegativeInfinity, 0f), false, 0f, false, true);
                 }
             }
-            if (ToggleMain[9])
+            if (ToggleMic[2])
             {
                 foreach (StartOfRound StartOfRound in UnityEngine.Object.FindObjectsOfType<StartOfRound>())
                 {
                     StartOfRound.localPlayerController.GetComponent<NetworkObject>().ChangeOwnership(StartOfRound.localPlayerController.actualClientId);
                 }
             }
+            if (ToggleMic[3])
+            {
+                foreach (Terminal Terminal in UnityEngine.Object.FindObjectsOfType<Terminal>())
+                {
+                    if (Terminal != null && addMoney)
+                    {
+                        if (GameNetworkManager.Instance.localPlayerController.IsServer)
+                        {
+                            Terminal.groupCredits += 200;
+                            addMoney = false;
+                            ToggleMic[3] = false;
+                        }
+                        else
+                        {
+                            Terminal.groupCredits += 200;
+                            Terminal.SyncGroupCreditsServerRpc(Terminal.groupCredits, Terminal.numberOfItemsInDropship);
+                            addMoney = false;
+                            ToggleMic[3] = false;
+                        }
+                    }
+                }
+            }
+            if (ToggleMic[4]) { HighScrapValue = true; } else { HighScrapValue = false; }
+            if (ToggleMic[5]) { UnlimitedScanRange = true; } else { UnlimitedScanRange = false; }
+            // ESP
+            if (ToggleMic[6])
+            {
+                foreach (GrabbableObject grabbableObject in Object.FindObjectsOfType(typeof(GrabbableObject)) as GrabbableObject[])
+                {
+                    string text = "Object";
+                    if (grabbableObject.itemProperties != null)
+                    {
+                        if (grabbableObject.itemProperties.itemName != null)
+                        {
+                            text = grabbableObject.itemProperties.itemName;
+                        }
+                        int creditsWorth = grabbableObject.itemProperties.creditsWorth;
+                        text = text + " (" + grabbableObject.itemProperties.creditsWorth.ToString() + ")";
+                    }
+                    Vector3 vector;
+                    if (WorldToScreen(GameNetworkManager.Instance.localPlayerController.gameplayCamera, grabbableObject.transform.position, out vector))
+                    {
+                        GUI.Label(new Rect(vector.x, vector.y, 100f, 25f), text);
+                    }
+                }
+            }
+            if (ToggleMic[7])
+            {
+                PlayerControllerB[] array3 = Object.FindObjectsOfType(typeof(PlayerControllerB)) as PlayerControllerB[];
+                for (int k = 0; k < array3.Length; k++)
+                {
+                    PlayerControllerB playerControllerB = array3[k];
+                    string playerUsername = playerControllerB.playerUsername;
+                    Vector3 vector2;
+                    bool flag = WorldToScreen(GameNetworkManager.Instance.localPlayerController.gameplayCamera, playerControllerB.playerGlobalHead.transform.position, out vector2);
+                    if (flag)
+                    {
+                        GUI.Label(new Rect(vector2.x, vector2.y, 100f, 25f), playerUsername);
+                    }
+                }
+            }
+            if (ToggleMic[8])
+            {
+                foreach (EnemyAI enemyAI in Object.FindObjectsOfType(typeof(EnemyAI)) as EnemyAI[])
+                {
+                    string enemyName = enemyAI.enemyType.enemyName;
+                    Vector3 vector3;
+                    bool flag2 = WorldToScreen(GameNetworkManager.Instance.localPlayerController.gameplayCamera, enemyAI.transform.position, out vector3);
+                    if (flag2)
+                    {
+                        GUI.Label(new Rect(vector3.x, vector3.y, 100f, 100f), enemyName);
+                    }
+                }
+            }
+            if (ToggleMic[9]) { FindObjectOfType<Terminal>().groupCredits += 100000; }
+            if (ToggleMic[10]) { FindObjectOfType<Terminal>().groupCredits -= 100000; }
+            if (ToggleMic[11])
+            {
+                int groupCredits = FindObjectOfType<Terminal>().groupCredits;
+                FindObjectOfType<Terminal>().groupCredits -= groupCredits;
+            }
+            if (ToggleMic[12]) { FindObjectOfType<HUDManager>().localPlayerXP += 999; }
+            // END ESP
         }
         #region Main GUI
         private void OnGUI()
@@ -169,6 +336,7 @@ namespace Lethal_Company_Mod_Menu.MainMenu
         }
         public static void OnGUI(int windowId)
         {
+            //Instance.Update();
             GUILayout.BeginArea(new Rect(10, 10, GUIRect.width - 20, GUIRect.height - 20));
             GUILayout.Space(10);
 
@@ -184,7 +352,7 @@ namespace Lethal_Company_Mod_Menu.MainMenu
             }
             else if (selectedTab == 2)
             {
-                _instance.DrawMenuBtnTab();
+                _instance.DrawInfoTab();
             }
             else if (selectedTab == 3)
             {
@@ -323,7 +491,7 @@ namespace Lethal_Company_Mod_Menu.MainMenu
         }
         #endregion
         #endregion
-        internal static bool nightVision, enableGod, EnemyCannotBeSpawned, InfiniteSprint;
+        internal static bool nightVision, enableGod, EnemyCannotBeSpawned, InfiniteSprint, UnlimitedItemPower, HighScrapValue, UnlimitedScanRange;
         #region Field
         // Textures
         private Texture2D button, buttonHovered, buttonActive;
@@ -331,10 +499,12 @@ namespace Lethal_Company_Mod_Menu.MainMenu
         private Texture2D textArea, textAreaHovered, textAreaActive;
         private Texture2D box;
         private static MainGUI _instance;
+        private Dictionary<Type, List<Component>> objectCache = new Dictionary<Type, List<Component>>();
         private bool joining = false;
         public bool shouldSpawnEnemy;
         public AudioReverbTrigger currentAudioTrigger;
         public KeyCode toggleKey = KeyCode.Insert;
+        private int numberDeadLastRound;
         private int SpeedSelection = 0;
         public static GameObject pointer;
         private string[] SpeedOptions = new string[] { "Slow", "Default", "Fast", "Super Fast", "FASTTTTTTTS" };
@@ -343,25 +513,29 @@ namespace Lethal_Company_Mod_Menu.MainMenu
         internal static bool playerManagerEnabled = false;
         public string guiSelectedEnemy;
         private static bool hasGUISynced;
+        private float cacheRefreshInterval = 1.5f;
+        private int enemyCount = 0;
+        private bool addMoney = false;
 
         private static RoundManager currentRound;
         public static MainGUI Instance => _instance;
 
+        private string logs = "Logs (Only shows player deaths for now):\n";
         // GUI Variables
         private static SelectableLevel currentLevel;
         public static Rect GUIRect = new Rect(0, 0, 540, 240);
         private static int selectedTab = 0;
-        private static readonly string[] tabNames = { "Main", "placeholder", "placeholder", "placeholder", "Settings" };
+        private static readonly string[] tabNames = { "Main", "Misc", "Info", "Player List", "Settings" };
         private bool[] TogglePlayerList = new bool[999];
         private bool[] ToggleMain = new bool[999];
         private bool[] ToggleMic = new bool[999];
         private bool toggled = true;
+        private PlayerControllerB selectedPlayer;
         public static Dictionary<SpawnableEnemyWithRarity, AnimationCurve> enemyPropCurves;
         public static Dictionary<SelectableLevel, List<SpawnableEnemyWithRarity>> levelEnemySpawns;
         public static Dictionary<SpawnableEnemyWithRarity, int> enemyRaritys;
         private static EnemyVent[] currentLevelVents;
         private static SpawnableEnemyWithRarity jesterRef;
-        internal static PlayerControllerB playerRef;
         internal static float nightVisionIntensity, nightVisionRange;
         internal static Color nightVisionColor;
         public float toggleDelay = 0.5f;
@@ -369,31 +543,13 @@ namespace Lethal_Company_Mod_Menu.MainMenu
         private Vector2 scrollPosition = Vector2.zero;
         #endregion
         #region Mods
-        public static void ExplosionPlayer()
+        public static bool WorldToScreen(Camera camera, Vector3 world, out Vector3 screen)
         {
-            Ray ray = Camera.main.ScreenPointToRay(UnityInput.Current.mousePosition);
-            RaycastHit raycastHit;
-            Physics.Raycast(ray.origin, ray.direction, out raycastHit);
-            if (pointer == null)
-            {
-                pointer = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                Object.Destroy(pointer.GetComponent<Rigidbody>());
-                Object.Destroy(pointer.GetComponent<SphereCollider>());
-                pointer.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
-            }
-            pointer.transform.position = raycastHit.point;
-            if (UnityInput.Current.GetMouseButton(0))
-            {
-                enableGod = true;
-                foreach (GameNetcodeStuff.PlayerControllerB ss in UnityEngine.Object.FindObjectsOfType<GameNetcodeStuff.PlayerControllerB>())
-                {
-                    Landmine.SpawnExplosion(ss.serverPlayerPosition, true, 999f, 999f);
-                }
-            } 
-            else
-            {
-                enableGod = false;
-            }
+            screen = camera.WorldToViewportPoint(world);
+            screen.x *= (float)Screen.width;
+            screen.y *= (float)Screen.height;
+            screen.y = (float)Screen.height - screen.y;
+            return screen.z > 0f;
         }
         public static void PermaLockDoor()
         {
@@ -409,7 +565,6 @@ namespace Lethal_Company_Mod_Menu.MainMenu
                 s.UnlockDoor();
             }
         }
-
         #region Patches
 
         [HarmonyPatch(typeof(RoundManager), "SpawnEnemyFromVent")]

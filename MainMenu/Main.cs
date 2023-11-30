@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using BepInEx;
+using LethalCompanyHacks.MainMenuPatch;
 
 namespace Lethal_Company_Mod_Menu.MainMenu
 {
@@ -12,8 +13,9 @@ namespace Lethal_Company_Mod_Menu.MainMenu
             if (!GameObject.Find("Loader"))
             {
                 GameObject Loader = new GameObject("Loader");
-                Loader.AddComponent<MainMenu.MainGUI>();
-                Loader.AddComponent<MainMenu.PlayerControllerBPatch>();
+                Loader.AddComponent<MainGUI>();
+                Loader.AddComponent<PlayerControllerBPatch>();
+                Loader.AddComponent<OtuherPatch>();
             }
         }
     }
