@@ -15,7 +15,7 @@ cd Lethal-Company-Mod-Menu
 
 ### Option 2: Download the DLL
 
-For a quicker setup, download from the [releases page](https://github.com/official-notfishvr/Lethal-Company-Mod-Menu/releases/download/V1/Lethal-Company-Mod-Menu.dll).
+For a quicker setup, download from the [releases page](https://github.com/official-notfishvr/Lethal-Company-Mod-Menu/releases/download/V2/Lethal-Company-Mod-Menu.dll).
 
 ## Features
 
