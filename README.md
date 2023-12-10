@@ -8,7 +8,7 @@ Get started with BepInEx using the [Lethal-Company-BepInEx-Installer](https://gi
 
 1. Navigate to the Lethal Company folder path.
 2. Go to "\BepInEx\config".
-3. Insert the [BepInEx.cfg](https://notfishvr.dev/cdn/BepInEx.cfg) file in "\BepInEx\config".
+3. Insert the [BepInEx.cfg](https://notfishvr.dev/cdn/BepInEx.cfg) file in folder "\BepInEx\config".
 
 ## Features
 
