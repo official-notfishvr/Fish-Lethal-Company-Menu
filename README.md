@@ -4,18 +4,11 @@ This Is Lethal Company Mod Menu!!!!!!!!!
 
 ## Installation Guide
 
-use [Lethal-Company-BepInEx-Installer](https://github.com/official-notfishvr/Lethal-Company-BepInEx-Installer) to set up BepInEx.
+Get started with BepInEx using the [Lethal-Company-BepInEx-Installer](https://github.com/official-notfishvr/Lethal-Company-BepInEx-Installer). Download the latest release of the mod menu from the [releases page](https://github.com/official-notfishvr/Lethal-Company-Mod-Menu/releases/download/V2.1/Lethal-Company-Mod-Menu.dll). In case of any issues, follow these steps:
 
-### Option 1: Clone the Repository
-
-```bash
-git clone https://github.com/official-notfishvr/Lethal-Company-Mod-Menu.git
-cd Lethal-Company-Mod-Menu
-```
-
-### Option 2: Download the DLL
-
-For a quicker setup, download from the [releases page](https://github.com/official-notfishvr/Lethal-Company-Mod-Menu/releases/download/V2.1/Lethal-Company-Mod-Menu.dll).
+1. Navigate to the Lethal Company folder path.
+2. Go to "\BepInEx\config".
+3. Insert the [BepInEx.cfg](https://notfishvr.dev/cdn/BepInEx.cfg) file in "\BepInEx\config".
 
 ## Features
 
