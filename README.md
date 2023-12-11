@@ -10,39 +10,44 @@ Get started with BepInEx using the [Lethal-Company-BepInEx-Installer](https://gi
 2. Go to "\BepInEx\config".
 3. Insert the [BepInEx.cfg](https://notfishvr.dev/cdn/BepInEx.cfg) file in folder "\BepInEx\config".
 
-## Features
+### <p align="center">📜 Features 📜</p>
 
-### Main Tab
+```
 
-1. Night Vision
-2. God Mode
-3. Enemy Cannot Be Spawned
-4. Speed
-5. Fly
-6. Spawn Body
-7. Explosion
-8. Infinite Sprint
-9. Unlimited Item Power
+• Main Tab
+      - Night Vision
+      - God Mode
+      - Enemy Cannot Be Spawned
+      - Speed
+      - Fly
+      - Spawn Body
+      - Explosion
+      - Infinite Sprint
+      - Unlimited Item Power
 
-### Misc Tab
+• Misc Tab
 
-1. Tp All
-2. Give Ownership
-3. Add Money
-4. High Scrap Value
-5. Unlimited Scan Range
-6. Object ESP
-7. Player ESP
-8. Enemy ESP
-9. Add 100k Cash
-10. Remove 100k Cash
-11. Remove Current Cash
-12. Set Level High
+      - Tp All
+      - Give Ownership
+      - Add Money
+      - High Scrap Value
+      - Unlimited Scan Range
+      - Object ESP
+      - Player ESP
+      - Enemy ESP
+      - Add 100k Cash
+      - Remove 100k Cash
+      - Remove Current Cash
+      - Set Level High
 
-### Info Tab
+• Info Tab
 
-1. Current XP:
-2. Current Level:
+      - Current XP:
+      - Current Level:
 
-### Player List Tab
-shows the Player List
+• Player List Tab
+      - shows the Player List
+
+```
+
+-----
