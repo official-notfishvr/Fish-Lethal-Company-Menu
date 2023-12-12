@@ -26,7 +26,6 @@ Get started with BepInEx using the [Lethal-Company-BepInEx-Installer](https://gi
       - Unlimited Item Power
 
 • Misc Tab
-
       - Tp All
       - Give Ownership
       - Add Money
@@ -41,7 +40,6 @@ Get started with BepInEx using the [Lethal-Company-BepInEx-Installer](https://gi
       - Set Level High
 
 • Info Tab
-
       - Current XP:
       - Current Level:
 
