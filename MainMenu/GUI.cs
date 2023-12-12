@@ -14,7 +14,9 @@ using Unity.Profiling;
 using Unity.Services.Authentication.Internal;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
+using UnityEngine.Experimental.GlobalIllumination;
 using UnityEngine.PlayerLoop;
+using UnityEngine.Rendering.HighDefinition;
 using UnityEngine.UIElements;
 using static UnityEngine.InputSystem.DefaultInputActions;
 using Color = UnityEngine.Color;
@@ -93,7 +95,7 @@ namespace Lethal_Company_Mod_Menu.MainMenu
 
                 if (playerManagerEnabled && selectedPlayer == playerControllerB)
                 {
-                    if (GUILayout.Button("Kill")) { selectedPlayer.DamagePlayerFromOtherClientServerRpc(1000, new Vector3(0f, 0f, 0f), 0); }
+                    if (GUILayout.Button("Kill")) { selectedPlayer.DamagePlayerFromOtherClientServerRpc(int.MaxValue, Vector3.zero, -1); }
 
                     if (GUILayout.Button("TP")) { GameNetworkManager.Instance.localPlayerController.transform.position = selectedPlayer.transform.position; }
 
@@ -118,16 +120,35 @@ namespace Lethal_Company_Mod_Menu.MainMenu
         public void Update()
         {
             GUIToggleCheck();
-            DeadBodyInfo[] DeadBodyInfo = Object.FindObjectsOfType(typeof(DeadBodyInfo)) as DeadBodyInfo[];
-            int num = DeadBodyInfo.Length;
-            if (num > numberDeadLastRound)
+            foreach (DeadBodyInfo deadBodyInfoInstance in UnityEngine.Object.FindObjectsOfType<DeadBodyInfo>())
             {
-                logs = logs + DeadBodyInfo[num - 1].playerScript.playerUsername + " has died!!!\n";
-                numberDeadLastRound++;
+                int num = UnityEngine.Object.FindObjectsOfType<DeadBodyInfo>().Length;
+                if (num > numberDeadLastRound)
+                {
+                    logs = logs + deadBodyInfoInstance.playerScript.playerUsername + " has died!!!\n";
+                    numberDeadLastRound++;
+                }
             }
 
             // Main
-            if (ToggleMain[1]) { nightVision = true; } else { nightVision = false; }
+            if (ToggleMain[1]) 
+            { 
+                nightVision = true;
+                foreach (HDAdditionalLightData lightData in UnityEngine.Object.FindObjectsOfType<HDAdditionalLightData>())
+                {
+                    foreach (TimeOfDay timeOfDay in UnityEngine.Object.FindObjectsOfType<TimeOfDay>())
+                    {
+                        foreach (StartOfRound startOfRound in UnityEngine.Object.FindObjectsOfType<StartOfRound>())
+                        {
+                            lightData.lightDimmer = float.MaxValue;
+                            lightData.distance = float.MaxValue;
+                            timeOfDay.insideLighting = false;
+                            startOfRound.blackSkyVolume.weight = 0;
+                        }
+                    }
+                }
+            }
+            else  { nightVision = false;  }
             if (ToggleMain[2]) { enableGod = true; /*localPlayerController.health = 100;*/  } else { enableGod = false; }
             if (ToggleMain[3]) { EnemyCannotBeSpawned = true; } else { EnemyCannotBeSpawned = false; }
             if (ToggleMain[4])
@@ -266,7 +287,7 @@ namespace Lethal_Company_Mod_Menu.MainMenu
             // ESP
             if (ToggleMic[6])
             {
-                foreach (GrabbableObject grabbableObject in Object.FindObjectsOfType(typeof(GrabbableObject)) as GrabbableObject[])
+                foreach (GrabbableObject grabbableObject in Object.FindObjectsOfType(typeof(GrabbableObject)))
                 {
                     string text = "Object";
                     if (grabbableObject.itemProperties != null)
@@ -287,32 +308,33 @@ namespace Lethal_Company_Mod_Menu.MainMenu
             }
             if (ToggleMic[7])
             {
-                PlayerControllerB[] array3 = Object.FindObjectsOfType(typeof(PlayerControllerB)) as PlayerControllerB[];
-                for (int k = 0; k < array3.Length; k++)
+                foreach (PlayerControllerB playerControllerB in UnityEngine.Object.FindObjectsOfType<PlayerControllerB>())
                 {
-                    PlayerControllerB playerControllerB = array3[k];
                     string playerUsername = playerControllerB.playerUsername;
-                    Vector3 vector2;
-                    bool flag = WorldToScreen(GameNetworkManager.Instance.localPlayerController.gameplayCamera, playerControllerB.playerGlobalHead.transform.position, out vector2);
+                    Vector3 vector;
+                    bool flag = WorldToScreen(GameNetworkManager.Instance.localPlayerController.gameplayCamera, playerControllerB.playerGlobalHead.transform.position, out vector);
+
                     if (flag)
                     {
-                        GUI.Label(new Rect(vector2.x, vector2.y, 100f, 25f), playerUsername);
+                        GUI.Label(new Rect(vector.x, vector.y, 100f, 25f), playerUsername);
                     }
                 }
             }
             if (ToggleMic[8])
             {
-                foreach (EnemyAI enemyAI in Object.FindObjectsOfType(typeof(EnemyAI)) as EnemyAI[])
+                foreach (EnemyAI enemyAI in Object.FindObjectsOfType(typeof(EnemyAI)))
                 {
                     string enemyName = enemyAI.enemyType.enemyName;
-                    Vector3 vector3;
-                    bool flag2 = WorldToScreen(GameNetworkManager.Instance.localPlayerController.gameplayCamera, enemyAI.transform.position, out vector3);
-                    if (flag2)
+                    Vector3 vector;
+                    bool flag = WorldToScreen(GameNetworkManager.Instance.localPlayerController.gameplayCamera, enemyAI.transform.position, out vector);
+
+                    if (flag)
                     {
-                        GUI.Label(new Rect(vector3.x, vector3.y, 100f, 100f), enemyName);
+                        GUI.Label(new Rect(vector.x, vector.y, 100f, 100f), enemyName);
                     }
                 }
             }
+            // END ESP
             if (ToggleMic[9]) { FindObjectOfType<Terminal>().groupCredits += 100000; }
             if (ToggleMic[10]) { FindObjectOfType<Terminal>().groupCredits -= 100000; }
             if (ToggleMic[11])
@@ -321,7 +343,6 @@ namespace Lethal_Company_Mod_Menu.MainMenu
                 FindObjectOfType<Terminal>().groupCredits -= groupCredits;
             }
             if (ToggleMic[12]) { FindObjectOfType<HUDManager>().localPlayerXP += 999; }
-            // END ESP
         }
         #region Main GUI
         private void OnGUI()
@@ -420,6 +441,7 @@ namespace Lethal_Company_Mod_Menu.MainMenu
             enemyRaritys = new Dictionary<SpawnableEnemyWithRarity, int>();
             levelEnemySpawns = new Dictionary<SelectableLevel, List<SpawnableEnemyWithRarity>>();
             enemyPropCurves = new Dictionary<SpawnableEnemyWithRarity, AnimationCurve>();
+            EnemyCannotBeSpawned = false;
             _instance = this;
             button = CreateTexture(new Color32(64, 64, 64, 255));
             buttonHovered = CreateTexture(new Color32(75, 75, 75, 255));
@@ -497,6 +519,7 @@ namespace Lethal_Company_Mod_Menu.MainMenu
         private Texture2D button, buttonHovered, buttonActive;
         private Texture2D windowBackground;
         private Texture2D textArea, textAreaHovered, textAreaActive;
+        private GameObject directionalLightClone;
         private Texture2D box;
         private static MainGUI _instance;
         private Dictionary<Type, List<Component>> objectCache = new Dictionary<Type, List<Component>>();
@@ -566,13 +589,6 @@ namespace Lethal_Company_Mod_Menu.MainMenu
             }
         }
         #region Patches
-
-        [HarmonyPatch(typeof(RoundManager), "SpawnEnemyFromVent")]
-        [HarmonyPrefix]
-        private static void logSpawnEnemyFromVent()
-        {
-            Debug.Log("Attempting to spawn an enemy");
-        }
 
         [HarmonyPatch(typeof(RoundManager), "EnemyCannotBeSpawned")]
         [HarmonyPrefix]
@@ -648,48 +664,6 @@ namespace Lethal_Company_Mod_Menu.MainMenu
             return true;
         }
 
-        [HarmonyPatch(typeof(RoundManager), "AdvanceHourAndSpawnNewBatchOfEnemies")]
-        [HarmonyPrefix]
-        private static void updateCurrentLevelInfo(ref EnemyVent[] ___allEnemyVents, ref SelectableLevel ___currentLevel)
-        {
-            currentLevel = ___currentLevel;
-            currentLevelVents = ___allEnemyVents;
-        }
-
-        [HarmonyPatch(typeof(HUDManager), "SubmitChat_performed")]
-        [HarmonyPrefix]
-        private static void Commands(HUDManager __instance)
-        {
-            string text = __instance.chatTextField.text;
-            string text2 = "/";
-            Debug.Log(text);
-            if (!text.ToLower().StartsWith(text2.ToLower()))
-            {
-                return;
-            }
-            string text3 = "Default Title";
-            string text4 = "Default Body";
-            if (text.ToLower().StartsWith(text2 + "togglelights"))
-            {
-                BreakerBox breakerBox = Object.FindObjectOfType<BreakerBox>();
-                if (breakerBox != null)
-                {
-                    text3 = "Light Change";
-                    if (breakerBox.isPowerOn)
-                    {
-                        currentRound.TurnBreakerSwitchesOff();
-                        currentRound.TurnOnAllLights(false);
-                        breakerBox.isPowerOn = false;
-                        text4 = "Turned the lights off";
-                    }
-                    else
-                    {
-                        currentRound.PowerSwitchOnClientRpc();
-                        text4 = "Turned the lights on";
-                    }
-                }
-            }
-        }
         #endregion
         #endregion
     }

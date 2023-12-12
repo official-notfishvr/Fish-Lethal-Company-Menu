@@ -12,23 +12,22 @@ namespace LethalCompanyHacks.MainMenuPatch
     [HarmonyPatch(typeof(PlayerControllerB))]
     public class PlayerControllerBPatch : MonoBehaviour
     {
+        [HarmonyPatch(typeof(PlayerControllerB))]
         [HarmonyPatch("AllowPlayerDeath")]
-        [HarmonyPrefix]
         public static bool OverrideDeath() => !MainGUI.enableGod;
 
-        [HarmonyPatch("DamagePlayer")]
-        [HarmonyPrefix]
-        public static bool Prefix(PlayerControllerB __instance) =>
-            __instance.actualClientId == GameNetworkManager.Instance.localPlayerController.actualClientId && MainGUI.enableGod;
 
-
+        [HarmonyPatch(typeof(PlayerControllerB))]
         [HarmonyPatch("Update")]
-        [HarmonyPostfix]
         public static void ReadInput(PlayerControllerB playerController)
         {
-            FlashlightItem pocketedFlashlight = playerController.pocketedFlashlight as FlashlightItem;
-            playerController.helmetLight.enabled = true;
-            pocketedFlashlight?.PocketFlashlightServerRpc(true);
+            foreach (FlashlightItem pocketedFlashlight in UnityEngine.Object.FindObjectsOfType<FlashlightItem>())
+            {
+                playerController.helmetLight.enabled = true;
+                pocketedFlashlight.usingPlayerHelmetLight = false;
+                pocketedFlashlight.UseItemOnClient(true);
+                pocketedFlashlight.PocketFlashlightServerRpc(true);
+            }
         }
     }
 }
