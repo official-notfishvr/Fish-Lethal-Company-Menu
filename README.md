@@ -15,7 +15,6 @@ Get started with BepInEx using the [Lethal-Company-BepInEx-Installer](https://gi
 ### <p align="center"> Features </p>
 
 ```
-
 • Main Tab
       - Night Vision
       - God Mode
@@ -47,14 +46,11 @@ Get started with BepInEx using the [Lethal-Company-BepInEx-Installer](https://gi
 
 • Player List Tab
       - shows the Player List
-
 ```
 -----
 ### <p align="center"> Info </p>
 ```
-
 • Auto
       - Open GUI/Mod Menu (if it does not retry the Installation Guide
-
 ```
 -----
