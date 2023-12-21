@@ -18,7 +18,6 @@ using UnityEngine.Experimental.GlobalIllumination;
 using UnityEngine.PlayerLoop;
 using UnityEngine.Rendering.HighDefinition;
 using UnityEngine.UIElements;
-using static System.Runtime.CompilerServices.RuntimeHelpers;
 using static UnityEngine.InputSystem.DefaultInputActions;
 using Color = UnityEngine.Color;
 using Object = UnityEngine.Object;
@@ -63,6 +62,7 @@ namespace Lethal_Company_Mod_Menu.MainMenu
             ToggleMic[11] = ToggleButton("Remove Current Cash", ToggleMic[11]);
             ToggleMic[12] = ToggleButton("Set Level High", ToggleMic[12]);
 
+            
             GUILayout.EndScrollView();
         }
         private void DrawInfoTab()
@@ -130,10 +130,22 @@ namespace Lethal_Company_Mod_Menu.MainMenu
                     numberDeadLastRound++;
                 }
             }
+            UpdateMainTab();
+            UpdateMicModsTab();                       
+        }
 
+        private List<LabeledText> labelsToDisplay = new List<LabeledText>();
+        public class LabeledText
+        {
+            public string Text { get; set; }
+            public Color TextColor { get; set; }
+            public Vector2 Coordinates { get; set; }
+        }
+        private void UpdateMainTab()
+        {
             // Main
-            if (ToggleMain[1]) 
-            { 
+            if (ToggleMain[1])
+            {
                 nightVision = true;
                 foreach (HDAdditionalLightData lightData in UnityEngine.Object.FindObjectsOfType<HDAdditionalLightData>())
                 {
@@ -149,7 +161,7 @@ namespace Lethal_Company_Mod_Menu.MainMenu
                     }
                 }
             }
-            else  { nightVision = false;  }
+            else { nightVision = false; }
             if (ToggleMain[2]) { enableGod = true; /*localPlayerController.health = 100;*/  } else { enableGod = false; }
             if (ToggleMain[3]) { EnemyCannotBeSpawned = true; } else { EnemyCannotBeSpawned = false; }
             if (ToggleMain[4])
@@ -226,8 +238,8 @@ namespace Lethal_Company_Mod_Menu.MainMenu
                     Landmine.SpawnExplosion(ss.serverPlayerPosition, true, 999f, 999f);
                 }
             }
-            if (ToggleMain[8]) 
-            { 
+            if (ToggleMain[8])
+            {
                 InfiniteSprint = true;
                 foreach (PlayerControllerB playerControllerB in UnityEngine.Object.FindObjectsOfType<PlayerControllerB>())
                 {
@@ -247,7 +259,11 @@ namespace Lethal_Company_Mod_Menu.MainMenu
                     }
                 }
             }
-
+        }
+        private void UpdateMicModsTab()
+        {
+            // Clear for ESP
+            labelsToDisplay.Clear();
             // Misc
             if (ToggleMic[1])
             {
@@ -294,6 +310,8 @@ namespace Lethal_Company_Mod_Menu.MainMenu
                 foreach (GrabbableObject grabbableObject in Object.FindObjectsOfType(typeof(GrabbableObject)))
                 {
                     string text = "Object";
+                    Color textColor = Color.yellow;
+
                     if (grabbableObject.itemProperties != null)
                     {
                         if (grabbableObject.itemProperties.itemName != null)
@@ -306,7 +324,10 @@ namespace Lethal_Company_Mod_Menu.MainMenu
                     Vector3 vector;
                     if (WorldToScreen(GameNetworkManager.Instance.localPlayerController.gameplayCamera, grabbableObject.transform.position, out vector))
                     {
-                        GUI.Label(new Rect(vector.x, vector.y, 100f, 25f), text);
+                        //GUIStyle styleItems = new GUIStyle(GUI.skin.label);
+                        //styleItems.normal.textColor = Color.yellow;
+                        //GUI.Label(new Rect(vector.x, vector.y, 100f, 25f), text, styleItems);                        
+                        labelsToDisplay.Add(new LabeledText { Text = text, TextColor = textColor, Coordinates = new Vector2(vector.x, vector.y) });
                     }
                 }
             }
@@ -315,12 +336,14 @@ namespace Lethal_Company_Mod_Menu.MainMenu
                 foreach (PlayerControllerB playerControllerB in UnityEngine.Object.FindObjectsOfType<PlayerControllerB>())
                 {
                     string playerUsername = playerControllerB.playerUsername;
+                    Color textColor = Color.white;
                     Vector3 vector;
                     bool flag = WorldToScreen(GameNetworkManager.Instance.localPlayerController.gameplayCamera, playerControllerB.playerGlobalHead.transform.position, out vector);
 
                     if (flag)
                     {
-                        GUI.Label(new Rect(vector.x, vector.y, 100f, 25f), playerUsername);
+                        //GUI.Label(new Rect(vector.x, vector.y, 100f, 25f), playerUsername);
+                        labelsToDisplay.Add(new LabeledText { Text = playerUsername, TextColor = textColor, Coordinates = new Vector2(vector.x, vector.y) });
                     }
                 }
             }
@@ -329,12 +352,16 @@ namespace Lethal_Company_Mod_Menu.MainMenu
                 foreach (EnemyAI enemyAI in Object.FindObjectsOfType(typeof(EnemyAI)))
                 {
                     string enemyName = enemyAI.enemyType.enemyName;
+                    Color textColor = Color.red;
                     Vector3 vector;
                     bool flag = WorldToScreen(GameNetworkManager.Instance.localPlayerController.gameplayCamera, enemyAI.transform.position, out vector);
 
                     if (flag)
                     {
-                        GUI.Label(new Rect(vector.x, vector.y, 100f, 100f), enemyName);
+                        //GUIStyle styleEnemy = new GUIStyle(GUI.skin.label);
+                        //styleEnemy.normal.textColor = Color.red;
+                        //GUI.Label(new Rect(vector.x, vector.y, 100f, 100f), enemyName, styleEnemy);
+                        labelsToDisplay.Add(new LabeledText { Text = enemyName, TextColor = textColor, Coordinates = new Vector2(vector.x, vector.y) });
                     }
                 }
             }
@@ -348,6 +375,7 @@ namespace Lethal_Company_Mod_Menu.MainMenu
             }
             if (ToggleMic[12]) { FindObjectOfType<HUDManager>().localPlayerXP += 999; }
         }
+
         #region Main GUI
         private void OnGUI()
         {
@@ -356,10 +384,20 @@ namespace Lethal_Company_Mod_Menu.MainMenu
             Update();
             if (toggled)
             {
-                GUIRect = GUI.Window(69, GUIRect, OnGUI, "Lethal Company GUI | Toggle: " + toggleKey);
+                GUIRect = GUI.Window(69, GUIRect, DrawWindow, "Lethal Company GUI | Toggle: " + toggleKey);
+            }
+
+            // Display for ESP
+            foreach (LabeledText labeledText in labelsToDisplay)
+            {
+                GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
+                labelStyle.normal.textColor = labeledText.TextColor;
+                                
+                // Debug.Log($"Label: {labeledText.Text}, Position: {labeledText.Coordinates}");
+                GUI.Label(new Rect(labeledText.Coordinates.x, labeledText.Coordinates.y, 100f, 25f), labeledText.Text, labelStyle);
             }
         }
-        public static void OnGUI(int windowId)
+        public static void DrawWindow(int windowId)
         {
             //Instance.Update();
             GUILayout.BeginArea(new Rect(10, 10, GUIRect.width - 20, GUIRect.height - 20));
