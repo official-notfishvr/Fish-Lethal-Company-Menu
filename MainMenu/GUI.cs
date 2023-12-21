@@ -18,6 +18,7 @@ using UnityEngine.Experimental.GlobalIllumination;
 using UnityEngine.PlayerLoop;
 using UnityEngine.Rendering.HighDefinition;
 using UnityEngine.UIElements;
+using static System.Runtime.CompilerServices.RuntimeHelpers;
 using static UnityEngine.InputSystem.DefaultInputActions;
 using Color = UnityEngine.Color;
 using Object = UnityEngine.Object;
@@ -167,39 +168,42 @@ namespace Lethal_Company_Mod_Menu.MainMenu
                 float Speed = this.Speed * Time.deltaTime;
                 foreach (GameNetcodeStuff.PlayerControllerB ss in UnityEngine.Object.FindObjectsOfType<GameNetcodeStuff.PlayerControllerB>())
                 {
-                    if (UnityInput.Current.GetKey(KeyCode.LeftShift))
+                    if (ss == GameNetworkManager.Instance.localPlayerController)
                     {
-                        Speed *= 2.2f;
-                    }
-                    if (UnityInput.Current.GetKey(KeyCode.W))
-                    {
-                        ss.playerRigidbody.transform.position += ss.playerGlobalHead.transform.forward * Speed;
-                        ss.playerRigidbody.velocity = new UnityEngine.Vector3(0f, 0f, 0f);
-                    }
-                    if (UnityInput.Current.GetKey(KeyCode.A))
-                    {
-                        ss.playerRigidbody.transform.position += ss.playerGlobalHead.transform.right * -Speed;
-                        ss.playerRigidbody.velocity = new UnityEngine.Vector3(0f, 0f, 0f);
-                    }
-                    if (UnityInput.Current.GetKey(KeyCode.S))
-                    {
-                        ss.playerRigidbody.transform.position += ss.playerGlobalHead.transform.forward * -Speed;
-                        ss.playerRigidbody.velocity = new UnityEngine.Vector3(0f, 0f, 0f);
-                    }
-                    if (UnityInput.Current.GetKey(KeyCode.D))
-                    {
-                        ss.playerRigidbody.transform.position += ss.playerGlobalHead.transform.right * Speed;
-                        ss.playerRigidbody.velocity = new UnityEngine.Vector3(0f, 0f, 0f);
-                    }
-                    if (UnityInput.Current.GetKey(KeyCode.Space))
-                    {
-                        ss.playerRigidbody.transform.position += ss.playerGlobalHead.transform.up * Speed;
-                        ss.playerRigidbody.velocity = new UnityEngine.Vector3(0f, 0f, 0f);
-                    }
-                    if (UnityInput.Current.GetKey(KeyCode.LeftControl))
-                    {
-                        ss.playerRigidbody.transform.position += ss.playerGlobalHead.transform.up * -Speed;
-                        ss.playerRigidbody.velocity = new UnityEngine.Vector3(0f, 0f, 0f);
+                        if (UnityInput.Current.GetKey(KeyCode.LeftShift))
+                        {
+                            Speed *= 2.2f;
+                        }
+                        if (UnityInput.Current.GetKey(KeyCode.W))
+                        {
+                            ss.playerRigidbody.transform.position += ss.playerGlobalHead.transform.forward * Speed;
+                            ss.playerRigidbody.velocity = new UnityEngine.Vector3(0f, 0f, 0f);
+                        }
+                        if (UnityInput.Current.GetKey(KeyCode.A))
+                        {
+                            ss.playerRigidbody.transform.position += ss.playerGlobalHead.transform.right * -Speed;
+                            ss.playerRigidbody.velocity = new UnityEngine.Vector3(0f, 0f, 0f);
+                        }
+                        if (UnityInput.Current.GetKey(KeyCode.S))
+                        {
+                            ss.playerRigidbody.transform.position += ss.playerGlobalHead.transform.forward * -Speed;
+                            ss.playerRigidbody.velocity = new UnityEngine.Vector3(0f, 0f, 0f);
+                        }
+                        if (UnityInput.Current.GetKey(KeyCode.D))
+                        {
+                            ss.playerRigidbody.transform.position += ss.playerGlobalHead.transform.right * Speed;
+                            ss.playerRigidbody.velocity = new UnityEngine.Vector3(0f, 0f, 0f);
+                        }
+                        if (UnityInput.Current.GetKey(KeyCode.Space))
+                        {
+                            ss.playerRigidbody.transform.position += ss.playerGlobalHead.transform.up * Speed;
+                            ss.playerRigidbody.velocity = new UnityEngine.Vector3(0f, 0f, 0f);
+                        }
+                        if (UnityInput.Current.GetKey(KeyCode.LeftControl))
+                        {
+                            ss.playerRigidbody.transform.position += ss.playerGlobalHead.transform.up * -Speed;
+                            ss.playerRigidbody.velocity = new UnityEngine.Vector3(0f, 0f, 0f);
+                        }
                     }
                 }
             }
