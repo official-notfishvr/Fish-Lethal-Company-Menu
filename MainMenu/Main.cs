@@ -13,10 +13,10 @@ namespace Lethal_Company_Mod_Menu.MainMenu
             if (!GameObject.Find("Loader"))
             {
                 GameObject Loader = new GameObject("Loader");
-                //Loader.hideFlags = HideFlags.None;
-                Loader.AddComponent<MainGUI>();
-                Loader.AddComponent<PlayerControllerBPatch>();
-                Loader.AddComponent<OtuherPatch>();
+                Loader.hideFlags = HideFlags.None;
+                Loader.AddComponent<MainGUI>().hideFlags = HideFlags.None;
+                Loader.AddComponent<PlayerControllerBPatch>().hideFlags = HideFlags.None;
+                Loader.AddComponent<OtuherPatch>().hideFlags = HideFlags.None;
             }
         }
     }
