@@ -13,14 +13,13 @@ namespace LethalCompanyHacks.MainMenuPatch
     public class OtuherPatch : MonoBehaviour
     {
         [HarmonyPatch(typeof(GrabbableObject))]
-        [HarmonyPatch("SyncBatteryServerRpc")]
+        [HarmonyPatch("Update")]
         public static bool UnlimitedItemPower(GrabbableObject __instance, ref int charge)
         {
             if (MainGUI.UnlimitedItemPower && __instance.itemProperties.requiresBattery)
             {
                 __instance.insertedBattery.empty = false;
-                __instance.insertedBattery.charge = 1f;
-                charge = 100;
+                __instance.insertedBattery.charge = 100f;
             }
             return true;
         }

@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using BepInEx;
+using System;
 using LethalCompanyHacks.MainMenuPatch;
 
 namespace Lethal_Company_Mod_Menu.MainMenu

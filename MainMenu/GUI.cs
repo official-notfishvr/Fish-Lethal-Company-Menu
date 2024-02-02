@@ -8,6 +8,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Security.Cryptography;
 using Unity.Netcode;
 using Unity.Profiling;
@@ -33,7 +34,7 @@ namespace Lethal_Company_Mod_Menu.MainMenu
         {
             scrollPosition = GUILayout.BeginScrollView(scrollPosition);
 
-            ToggleMain[1] = ToggleButton("Night Vision", ToggleMain[1]);
+            ToggleMain[1] = ToggleButton("No Fog", ToggleMain[1]);
             ToggleMain[2] = ToggleButton("God Mode", ToggleMain[2]);
             ToggleMain[3] = ToggleButton("Enemy Cant Be Spawned", ToggleMain[3]);
             ToggleMain[4] = ToggleButton("Speed", ToggleMain[4]);
@@ -42,6 +43,9 @@ namespace Lethal_Company_Mod_Menu.MainMenu
             ToggleMain[7] = ToggleButton("Explosion", ToggleMain[7]);
             ToggleMain[8] = ToggleButton("Infinite Sprint", ToggleMain[8]);
             ToggleMain[9] = ToggleButton("Unlimited Item Power", ToggleMain[9]);
+            ToggleMain[10] = ToggleButton("Gets All Scrap", ToggleMain[10]);
+            ToggleMain[11] = ToggleButton("No Weight", ToggleMain[11]);
+            ToggleMain[12] = ToggleButton("No Hands Full", ToggleMain[12]);
 
             GUILayout.EndScrollView();
         }
@@ -134,22 +138,14 @@ namespace Lethal_Company_Mod_Menu.MainMenu
             if (ToggleMain[1]) 
             { 
                 nightVision = true;
-                foreach (HDAdditionalLightData lightData in UnityEngine.Object.FindObjectsOfType<HDAdditionalLightData>())
-                {
-                    foreach (TimeOfDay timeOfDay in UnityEngine.Object.FindObjectsOfType<TimeOfDay>())
-                    {
-                        foreach (StartOfRound startOfRound in UnityEngine.Object.FindObjectsOfType<StartOfRound>())
-                        {
-                            lightData.lightDimmer = float.MaxValue;
-                            lightData.distance = float.MaxValue;
-                            timeOfDay.insideLighting = false;
-                            startOfRound.blackSkyVolume.weight = 0;
-                        }
-                    }
-                }
+                GameObject gameObject = GameObject.Find("Systems");
+
+                if (gameObject == null) return;
+
+                gameObject.transform.Find("Rendering").Find("VolumeMain").gameObject.SetActive(!nightVision);
             }
             else  { nightVision = false;  }
-            if (ToggleMain[2]) { enableGod = true; /*localPlayerController.health = 100;*/  } else { enableGod = false; }
+            if (ToggleMain[2]) { StartOfRound.Instance.allowLocalPlayerDeath = false; } else { StartOfRound.Instance.allowLocalPlayerDeath = true; }
             if (ToggleMain[3]) { EnemyCannotBeSpawned = true; } else { EnemyCannotBeSpawned = false; }
             if (ToggleMain[4])
             {
@@ -241,6 +237,46 @@ namespace Lethal_Company_Mod_Menu.MainMenu
                     {
                         GameNetworkManager.Instance.localPlayerController.currentlyHeldObjectServer.insertedBattery.charge = 1f;
                     }
+                }
+            }
+            if (ToggleMain[10])
+            {
+                PlayerControllerB localPlayerController = GameNetworkManager.Instance.localPlayerController;
+                if (localPlayerController != null)
+                {
+                    GrabbableObject[] grabbableObjects = UnityEngine.Object.FindObjectsOfType<GrabbableObject>();
+                    random.Shuffle(grabbableObjects);
+
+                    foreach (GrabbableObject grabbableObject in grabbableObjects)
+                    {
+                        if (!grabbableObject.grabbable || grabbableObject.playerHeldBy != null || grabbableObject == null ||
+                            grabbableObjectsUsed.Contains(grabbableObject) || !grabbableObject.itemProperties.isScrap ||
+                            grabbableObject.isInElevator) { continue; }
+
+                        localPlayerController.TeleportPlayer(grabbableObject.transform.position, false, 0f, false, true);
+
+                        InteractTrigger interactTrigger = grabbableObject.GetComponent<InteractTrigger>();
+                        if (interactTrigger != null) { Debug.Log("Found interact trigger"); }
+
+                        grabbableObjectsUsed = grabbableObjectsUsed.Append(grabbableObject).ToArray();
+                        break;
+                    }
+                }
+            }
+            if (ToggleMain[11])
+            {
+                PlayerControllerB localPlayerController = GameNetworkManager.Instance.localPlayerController;
+                if (!localPlayerController == null)
+                {
+                    localPlayerController.carryWeight = 1f;
+                }
+            }
+            if (ToggleMain[12])
+            {
+                PlayerControllerB localPlayerController = GameNetworkManager.Instance.localPlayerController;
+                if (!localPlayerController == null)
+                {
+                    localPlayerController.twoHanded = false;
                 }
             }
 
@@ -536,6 +572,8 @@ namespace Lethal_Company_Mod_Menu.MainMenu
         internal static bool playerManagerEnabled = false;
         public string guiSelectedEnemy;
         private static bool hasGUISynced;
+        public GrabbableObject[] grabbableObjectsUsed = new GrabbableObject[0];
+        public System.Random random = new System.Random();
         private float cacheRefreshInterval = 1.5f;
         private int enemyCount = 0;
         private bool addMoney = false;

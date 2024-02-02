@@ -16,6 +16,10 @@ namespace LethalCompanyHacks.MainMenuPatch
         [HarmonyPatch("AllowPlayerDeath")]
         public static bool OverrideDeath() => !MainGUI.enableGod;
 
+        [HarmonyPatch(typeof(PlayerControllerB))]
+        [HarmonyPatch("DamagePlayer")]
+        public static bool DamagePlayer() => !MainGUI.enableGod;
+
 
         [HarmonyPatch(typeof(PlayerControllerB))]
         [HarmonyPatch("Update")]
