@@ -16,20 +16,18 @@ Get started with BepInEx using the [Lethal-Company-BepInEx-Installer](https://gi
 
 ```
 • Main Tab
-      - Night Vision
+      - No Fog
       - God Mode
-      - Enemy Cannot Be Spawned
+      - Enemy Cant Be Spawned
       - Speed
       - Fly
-      - Spawn Body
-      - Explosion
-      - Infinite Sprint
-      - Unlimited Item Power
+      - Gets All Scrap
+      - No Weight
+      - No Hands Full
 
 • Misc Tab
-      - Tp All
+      - Night Vision
       - Give Ownership
-      - Add Money
       - High Scrap Value
       - Unlimited Scan Range
       - Object ESP
@@ -37,12 +35,11 @@ Get started with BepInEx using the [Lethal-Company-BepInEx-Installer](https://gi
       - Enemy ESP
       - Add 100k Cash
       - Remove 100k Cash
-      - Remove Current Cash
       - Set Level High
 
-• Info Tab
-      - Current XP:
-      - Current Level:
+• Host Tab
+      - Revive all players
+      - Spawn enemy on localpos
 
 • Player List Tab
       - shows the Player List
