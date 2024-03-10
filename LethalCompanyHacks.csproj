@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyName>NIKO Menu</AssemblyName>
+    <AssemblyName>Fish Lethal Company Menu</AssemblyName>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
