@@ -15,27 +15,27 @@ Get started with BepInEx using the [Lethal-Company-BepInEx-Installer](https://gi
 ### <p align="center"> Features </p>
 
 ```
-• Main Tab
+• Self Tab
       - No Fog
+      - Night Vision
       - God Mode
       - Enemy Cant Be Spawned
       - Speed
       - Fly
-      - Gets All Scrap
       - No Weight
-      - No Hands Full
+      - No Fall Damage
+      - Loot Through Walls
+      - Invisibility
 
-• Misc Tab
-      - Night Vision
-      - Give Ownership
-      - High Scrap Value
-      - Unlimited Scan Range
+• Server Tab
+      - Enemy Cant Be Spawned
+      - Gets All Scrap
+      - Never Lose Scrap
+
+• Visuals Tab
       - Object ESP
       - Player ESP
       - Enemy ESP
-      - Add 100k Cash
-      - Remove 100k Cash
-      - Set Level High
 
 • Host Tab
       - Revive all players
@@ -51,4 +51,3 @@ Get started with BepInEx using the [Lethal-Company-BepInEx-Installer](https://gi
       - Open GUI/Mod Menu (if it does not retry the Installation Guide
 ```
 -----
-https://github.com/notpoiu let me use his code
