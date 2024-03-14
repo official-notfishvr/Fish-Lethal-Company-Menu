@@ -31,6 +31,8 @@ Get started with BepInEx using the [Lethal-Company-BepInEx-Installer](https://gi
       - Enemy Cant Be Spawned
       - Gets All Scrap
       - Never Lose Scrap
+      - Disable All Turrets
+      - Explode All Landmines
 
 • Visuals Tab
       - Object ESP
@@ -39,7 +41,9 @@ Get started with BepInEx using the [Lethal-Company-BepInEx-Installer](https://gi
 
 • Host Tab
       - Revive all players
-      - Spawn enemy on localpos
+      - Spawn_Enemy
+      - Force Start
+      - Force EndGame
 
 • Player List Tab
       - shows the Player List
