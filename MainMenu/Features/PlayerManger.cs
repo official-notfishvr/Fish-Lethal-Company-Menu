@@ -3,6 +3,7 @@ using GameNetcodeStuff;
 using HarmonyLib;
 using LethalCompanyMenu.MainMenu.Patch;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -55,7 +56,16 @@ namespace LethalCompanyMenu.MainMenu.Stuff
     {
         public static LocalPlayer localPlayer;
         public PlayerControllerB PlayerController { get; set; }
-        public LocalPlayer(PlayerControllerB playerController) { PlayerController = playerController; }
+        public bool isDead { get; set; }
+        public ulong Id { get; }
+        public string Name { get; }
+        public LocalPlayer(PlayerControllerB playerController) 
+        {
+            PlayerController = playerController;
+            Id = PlayerController.playerSteamId;
+            Name = PlayerController.playerUsername;
+            isDead = PlayerController.isPlayerDead;
+        }
         public static bool IsValid()
         {
             return localPlayer != null &&
@@ -67,13 +77,15 @@ namespace LethalCompanyMenu.MainMenu.Stuff
     public class PlayerControllerHandler 
     {
         public static GrabbableObject[] grabbableObjectsUsed = new GrabbableObject[0];
+        private static GUIStyle Style;
+        public PlayerControllerHandler() { }
         internal class Weight
         {
             [HarmonyPostfix][HarmonyPatch(typeof(PlayerControllerB), "Update")]
             public static void WeightUpdate(PlayerControllerB __instance)
             {
                 if (LocalPlayer.localPlayer.PlayerController == null || __instance.playerClientId != LocalPlayer.localPlayer.PlayerController.playerClientId) return;
-                __instance.carryWeight = MainGUI.Instance.ToggleSelf[6] ? 1f : GetHeldWeight(__instance);
+                __instance.carryWeight = MainGUI.Instance.ToggleSelf[ToggleTypeSelf.NoWeight] ? 1f : GetHeldWeight(__instance);
             }
             private static float GetHeldWeight(PlayerControllerB player)
             {
@@ -95,7 +107,7 @@ namespace LethalCompanyMenu.MainMenu.Stuff
             [HarmonyPatch(typeof(PlayerControllerB), "PlayerHitGroundEffects")]
             public static bool NoFallDamagePatch(PlayerControllerB __instance)
             {
-                if (MainGUI.Instance.ToggleSelf[7])
+                if (MainGUI.Instance.ToggleSelf[ToggleTypeSelf.NoFallDamage])
                 {
                     __instance.takingFallDamage = false;
                     LocalPlayer.localPlayer.PlayerController.twoHanded = false;
@@ -109,7 +121,7 @@ namespace LethalCompanyMenu.MainMenu.Stuff
             [HarmonyPostfix][HarmonyPatch(typeof(RoundManager), "EnemyCannotBeSpawned")]
             public static bool EnemyCannotBeSpawnedPatch()
             {
-                if (MainGUI.Instance.ToggleServer[1])
+                if (MainGUI.Instance.ToggleServer[ToggleTypeServer.EnemyCantBeSpawned])
                 {
                     return false;
                 }
@@ -124,7 +136,7 @@ namespace LethalCompanyMenu.MainMenu.Stuff
             [HarmonyPostfix][HarmonyPatch(typeof(PlayerControllerB), "LateUpdate")]
             public static void InteractThroughWallsPatch(PlayerControllerB __instance)
             {
-                if (MainGUI.Instance.ToggleSelf[8])
+                if (MainGUI.Instance.ToggleSelf[ToggleTypeSelf.LootThroughWalls])
                 {
                     __instance.grabDistance = 10000f;
                     LayerMask mask = (LayerMask)LayerMask.GetMask("Props");
@@ -137,17 +149,64 @@ namespace LethalCompanyMenu.MainMenu.Stuff
                 }
             }
         }
+        internal class DisableAllTurrets
+        {
+            public static bool TurretTog;
+            public static List<Turret> TurretList = new List<Turret>();
+            public static void FindAndPopulateTurretList()
+            {
+                TurretList.Clear();
+                foreach (Turret turret in UnityEngine.Object.FindObjectsOfType<Turret>()) { TurretList.Add(turret); }
+            }
+            public static void DisableAllTurretsPatch()
+            {
+                TurretTog = !TurretTog;
+                FindAndPopulateTurretList();
+                foreach (Turret turret in TurretList)
+                {
+                    turret.ToggleTurretServerRpc(TurretTog);
+                }
+            }
+        }
+        internal class ExplodeAllLandmines
+        {
+            public static List<Landmine> landmineList = new List<Landmine>();
+            public static void FindAndPopulateLandmineList()
+            {
+                landmineList.Clear();
+                foreach (Landmine landmine in UnityEngine.Object.FindObjectsOfType<Landmine>()) { landmineList.Add(landmine); }
+            }
+            public static void ExplodeAllLandminesPatch()
+            {
+                FindAndPopulateLandmineList();
+                foreach (Landmine landmine in landmineList)
+                {
+                    if (!landmine.hasExploded) { landmine.ExplodeMineServerRpc(); }
+                }
+            }
+        }
+        internal class ToggleLights
+        {
+            public static bool FactoryLights;
+            public static RoundManager RoundManagerInstance;
+            public static void ToggleLightsPatch()
+            {
+                FactoryLights = !FactoryLights;
+                RoundManagerInstance = UnityEngine.Object.FindObjectOfType<RoundManager>();
+                RoundManagerInstance.SwitchPower(FactoryLights);
+            }
+        }
 
         public void NeverLoseScrap()
         {
-            if (MainGUI.Instance.ToggleServer[3] && StartOfRound.Instance.allPlayersDead)
+            if (MainGUI.Instance.ToggleServer[ToggleTypeServer.Never_Lose_Scrap] && StartOfRound.Instance.allPlayersDead)
             {
                 StartOfRound.Instance.allPlayersDead = false;
             }
         }
         public void Invisibility()
         {
-            if (LocalPlayer.localPlayer == null || !MainGUI.Instance.ToggleSelf[9]) return;
+            if (LocalPlayer.localPlayer == null || !MainGUI.Instance.ToggleSelf[ToggleTypeSelf.Invisibility]) return;
 
             Vector3 pos = StartOfRound.Instance.shipHasLanded ? StartOfRound.Instance.notSpawnedPosition.position : Vector3.zero;
 
@@ -210,7 +269,7 @@ namespace LethalCompanyMenu.MainMenu.Stuff
         public void Update()
         {
             // Self
-            if (MainGUI.Instance.ToggleSelf[1])
+            if (MainGUI.Instance.ToggleSelf[ToggleTypeSelf.NightVision])
             {
                 MainGUI.nightVision = true;
                 GameObject gameObject = GameObject.Find("Systems");
@@ -220,7 +279,7 @@ namespace LethalCompanyMenu.MainMenu.Stuff
                 gameObject.transform.Find("Rendering").Find("VolumeMain").gameObject.SetActive(!MainGUI.nightVision);
             }
             else { MainGUI.nightVision = false; }
-            if (MainGUI.Instance.ToggleSelf[2])
+            if (MainGUI.Instance.ToggleSelf[ToggleTypeSelf.NoFog])
             {
                 GameObject environment = GameObject.Find("Environment");
                 if (environment != null)
@@ -245,17 +304,17 @@ namespace LethalCompanyMenu.MainMenu.Stuff
                     }
                 }
             }
-            if (MainGUI.Instance.ToggleSelf[3]) { SetLocalPlayerHealth(); }
-            if (MainGUI.Instance.ToggleSelf[4]) { Speed(); }
-            if (MainGUI.Instance.ToggleSelf[5]) { Fly(); }
-            if (MainGUI.Instance.ToggleSelf[6]) { Weight.WeightUpdate(LocalPlayer.localPlayer.PlayerController); }
-            if (MainGUI.Instance.ToggleSelf[7]) { NoFallDamage.NoFallDamagePatch(LocalPlayer.localPlayer.PlayerController); }
-            if (MainGUI.Instance.ToggleSelf[8]) { InteractThroughWalls.InteractThroughWallsPatch(LocalPlayer.localPlayer.PlayerController); }
-            if (MainGUI.Instance.ToggleSelf[9]) { Invisibility(); }
+            if (MainGUI.Instance.ToggleSelf[ToggleTypeSelf.GodMode]) { SetLocalPlayerHealth(); }
+            if (MainGUI.Instance.ToggleSelf[ToggleTypeSelf.Speed]) { Speed(); }
+            if (MainGUI.Instance.ToggleSelf[ToggleTypeSelf.Fly]) { Fly(); }
+            if (MainGUI.Instance.ToggleSelf[ToggleTypeSelf.NoWeight]) { Weight.WeightUpdate(LocalPlayer.localPlayer.PlayerController); }
+            if (MainGUI.Instance.ToggleSelf[ToggleTypeSelf.NoFallDamage]) { NoFallDamage.NoFallDamagePatch(LocalPlayer.localPlayer.PlayerController); }
+            if (MainGUI.Instance.ToggleSelf[ToggleTypeSelf.LootThroughWalls]) { InteractThroughWalls.InteractThroughWallsPatch(LocalPlayer.localPlayer.PlayerController); }
+            if (MainGUI.Instance.ToggleSelf[ToggleTypeSelf.Invisibility]) { Invisibility(); }
 
             // Server
-            if (MainGUI.Instance.ToggleServer[1]) { EnemyCannotBeSpawned.EnemyCannotBeSpawnedPatch(); }
-            if (MainGUI.Instance.ToggleServer[2])
+            if (MainGUI.Instance.ToggleServer[ToggleTypeServer.EnemyCantBeSpawned]) { EnemyCannotBeSpawned.EnemyCannotBeSpawnedPatch(); }
+            if (MainGUI.Instance.ToggleServer[ToggleTypeServer.Gets_All_Scrap])
             {
                 GrabbableObject[] grabbableObjects = UnityEngine.Object.FindObjectsOfType<GrabbableObject>();
                 MainGUI.Instance.random.Shuffle(grabbableObjects);
@@ -275,10 +334,12 @@ namespace LethalCompanyMenu.MainMenu.Stuff
                     break;
                 }
             }
-            if (MainGUI.Instance.ToggleServer[3]) { NeverLoseScrap(); }
+            if (MainGUI.Instance.ToggleServer[ToggleTypeServer.Never_Lose_Scrap]) { NeverLoseScrap(); }
+            if (MainGUI.Instance.ToggleServer[ToggleTypeServer.Disable_All_Turrets]) { DisableAllTurrets.DisableAllTurretsPatch(); }
+            if (MainGUI.Instance.ToggleServer[ToggleTypeServer.Explode_All_Landmines]) { ExplodeAllLandmines.ExplodeAllLandminesPatch(); }
 
             // Visuals
-            if (MainGUI.Instance.ToggleVisuals[1])
+            if (MainGUI.Instance.ToggleVisuals[ToggleTypeVisuals.Object_ESP])
             {
                 foreach (GrabbableObject grabbableObject in UnityEngine.Object.FindObjectsOfType(typeof(GrabbableObject)))
                 {
@@ -299,7 +360,7 @@ namespace LethalCompanyMenu.MainMenu.Stuff
                     }
                 }
             }
-            if (MainGUI.Instance.ToggleVisuals[2])
+            if (MainGUI.Instance.ToggleVisuals[ToggleTypeVisuals.Player_ESP])
             {
                 foreach (PlayerControllerB playerControllerB in UnityEngine.Object.FindObjectsOfType<PlayerControllerB>())
                 {
@@ -313,7 +374,7 @@ namespace LethalCompanyMenu.MainMenu.Stuff
                     }
                 }
             }
-            if (MainGUI.Instance.ToggleVisuals[3])
+            if (MainGUI.Instance.ToggleVisuals[ToggleTypeVisuals.Enemy_ESP])
             {
                 foreach (EnemyAI enemyAI in UnityEngine.Object.FindObjectsOfType(typeof(EnemyAI)))
                 {
@@ -329,7 +390,7 @@ namespace LethalCompanyMenu.MainMenu.Stuff
             }
 
             // Host
-            if (MainGUI.Instance.ToggleHost[1])
+            if (MainGUI.Instance.ToggleHost[ToggleTypeHost.Revive_All_Players])
             {
                 StartOfRound StartOfRound = GameObject.FindObjectOfType<StartOfRound>();
                 if (StartOfRound != null)
@@ -337,17 +398,30 @@ namespace LethalCompanyMenu.MainMenu.Stuff
                     StartOfRound.ReviveDeadPlayers();
                     StartOfRound.PlayerHasRevivedServerRpc();
                     StartOfRound.AllPlayersHaveRevivedClientRpc();
-                    MainGUI.Instance.ToggleHost[1] = false;
                 }
             }
-            if (MainGUI.Instance.ToggleHost[2])
+            if (MainGUI.Instance.ToggleHost[ToggleTypeHost.Spawn_Enemy])
             {
                 RoundManager roundManager = GameObject.FindObjectOfType<RoundManager>();
                 SpawnEnemyClass.SpawnEnemyWithConfigManager("ForestGiant");
 
                 SpawnableEnemyWithRarity enemy = roundManager.currentLevel.OutsideEnemies[UnityEngine.Random.Range(0, roundManager.currentLevel.OutsideEnemies.Count)];
                 SpawnEnemyClass.SpawnEnemyAtLocalPlayer(enemy, 3);
-                MainGUI.Instance.ToggleHost[2] = false;
+                MainGUI.Instance.ToggleHost[ToggleTypeHost.Spawn_Enemy] = false;
+            }
+            if (MainGUI.Instance.ToggleHost[ToggleTypeHost.Force_Start])
+            {
+                foreach (StartOfRound StartOfRoundInstance in UnityEngine.Object.FindObjectsOfType(typeof(StartOfRound)))
+                {
+                    StartOfRoundInstance.StartGameServerRpc();
+                }
+            }
+            if (MainGUI.Instance.ToggleHost[ToggleTypeHost.Force_EndGame])
+            {
+                foreach (StartOfRound StartOfRoundInstance in UnityEngine.Object.FindObjectsOfType(typeof(StartOfRound)))
+                {
+                    StartOfRoundInstance.EndGameServerRpc(0);
+                }
             }
         }
     }

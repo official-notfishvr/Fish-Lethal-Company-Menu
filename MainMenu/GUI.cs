@@ -1,67 +1,127 @@
 ﻿using BepInEx;
 using GameNetcodeStuff;
+using LethalCompanyHacks.MainMenu;
 using LethalCompanyMenu.MainMenu.Stuff;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
+using static IngamePlayerSettings;
 using static LethalCompanyMenu.MainMenu.Stuff.PlayerControllerHandler;
 using Color = UnityEngine.Color;
 using Object = UnityEngine.Object;
 
 namespace LethalCompanyMenu.MainMenu
 {
+    public enum ToggleTypeSelf
+    {
+        NoFog,
+        NightVision,
+        GodMode,
+        Speed,
+        Fly,
+        NoWeight,
+        NoFallDamage,
+        LootThroughWalls,
+        Invisibility
+    }
+    public enum ToggleTypeServer
+    {
+        EnemyCantBeSpawned,
+        Gets_All_Scrap,
+        Never_Lose_Scrap,
+        Disable_All_Turrets,
+        Explode_All_Landmines
+    }
+    public enum ToggleTypeVisuals
+    {
+        Object_ESP,
+        Player_ESP,
+        Enemy_ESP,
+    }
+    public enum ToggleTypeHost
+    {
+        Revive_All_Players,
+        Spawn_Enemy,
+        Force_Start,
+        Force_EndGame,
+        //Kill_All_Enemies,
+        //Delete_All_Enemies
+    }
+
     [BepInPlugin("lethalcompany.GUI", "notfishvr", "1.0.0")]
     internal class MainGUI : BaseUnityPlugin
     {
-        public static bool Doonce = false;
-        private void DrawSelfTab()
+        #region Main GUI
+        private void DrawTab<T>(Dictionary<T, bool> toggleDictionary, Func<T, string> tooltipFunction)
         {
             scrollPosition = GUILayout.BeginScrollView(scrollPosition);
-
-            ToggleSelf[1] = ToggleButton("No Fog", ToggleSelf[1]);
-            ToggleSelf[2] = ToggleButton("Night Vision", ToggleSelf[2]);
-            ToggleSelf[3] = ToggleButton("God Mode", ToggleSelf[3]);
-            ToggleSelf[4] = ToggleButton("Speed", ToggleSelf[4]);
-            ToggleSelf[5] = ToggleButton("Fly", ToggleSelf[5]);
-            ToggleSelf[6] = ToggleButton("No Weight", ToggleSelf[6]);
-            ToggleSelf[7] = ToggleButton("No Fall Damage", ToggleSelf[7]);
-            ToggleSelf[8] = ToggleButton("Loot Through Walls", ToggleSelf[8]);
-            ToggleSelf[9] = ToggleButton("Invisibility", ToggleSelf[9]);
-
+            foreach (var toggleType in toggleDictionary.Keys.ToList())
+            {
+                string toggleName = toggleType.ToString().Replace("_", " ");
+                toggleDictionary[toggleType] = ToggleButton(toggleName, toggleDictionary[toggleType], tooltipFunction(toggleType));
+            }
             GUILayout.EndScrollView();
         }
-        private void DrawServerTab()
+        private string GetTooltip<T>(T toggleEnum)
         {
-            scrollPosition = GUILayout.BeginScrollView(scrollPosition);
-
-            ToggleServer[1] = ToggleButton("Enemy Cant Be Spawned", ToggleServer[1]);
-            ToggleServer[2] = ToggleButton("Gets All Scrap", ToggleServer[2]);
-            ToggleServer[3] = ToggleButton("Never Lose Scrap", ToggleServer[3]);
-
-            GUILayout.EndScrollView();
-        }
-        private void DrawVisualsTab()
-        {
-            scrollPosition = GUILayout.BeginScrollView(scrollPosition);
-
-            ToggleVisuals[1] = ToggleButton("Object ESP", ToggleVisuals[1]);
-            ToggleVisuals[2] = ToggleButton("Player ESP", ToggleVisuals[2]);
-            ToggleVisuals[3] = ToggleButton("Enemy ESP", ToggleVisuals[3]);
-
-            GUILayout.EndScrollView();
-        }
-        private void DrawHostTab()
-        {
-            scrollPosition = GUILayout.BeginScrollView(scrollPosition);
-
-            ToggleHost[1] = ToggleButton("Revive all players", ToggleHost[1]);
-            ToggleHost[2] = ToggleButton("Spawn enemy on localpos", ToggleHost[2]);
-
-            GUILayout.EndScrollView();
+            switch (toggleEnum)
+            {
+                // Self
+                case ToggleTypeSelf.NoFog:
+                    return "Theres No Fog";
+                case ToggleTypeSelf.NightVision:
+                    return "You Can See In Night Time";
+                case ToggleTypeSelf.Invisibility:
+                    return "Players will not be able to see you.";
+                case ToggleTypeSelf.NoFallDamage:
+                    return "You Take No Fall Damage";
+                case ToggleTypeSelf.Fly:
+                    return "You Can Fly!";
+                case ToggleTypeSelf.GodMode:
+                    return "Prevents you from taking any damage.";
+                case ToggleTypeSelf.LootThroughWalls:
+                    return "Allows you to interact with anything through walls.";
+                case ToggleTypeSelf.Speed:
+                    return "You Move Fasttt";
+                case ToggleTypeSelf.NoWeight:
+                    return "Removes speed limitations caused by item weight.";
+                // Server
+                case ToggleTypeServer.Disable_All_Turrets:
+                    return "Turrets Will be Disable";
+                case ToggleTypeServer.EnemyCantBeSpawned:
+                    return "Enemy Can NOT be Spawned";
+                case ToggleTypeServer.Explode_All_Landmines:
+                    return "all Landmines will be Explode";
+                case ToggleTypeServer.Gets_All_Scrap:
+                    return "You Will Get All Scrap";
+                case ToggleTypeServer.Never_Lose_Scrap:
+                    return "You Will Never Lose Scrap";
+                // Visuals
+                case ToggleTypeVisuals.Enemy_ESP:
+                    return "You Can See All Enemy";
+                case ToggleTypeVisuals.Object_ESP:
+                    return "You Can See All Object";
+                case ToggleTypeVisuals.Player_ESP:
+                    return "You Can See All Players";
+                // Host
+                case ToggleTypeHost.Force_EndGame:
+                    return "You Will Force End The Game";
+                case ToggleTypeHost.Force_Start:
+                    return "You Will Force Start The Game";
+                case ToggleTypeHost.Spawn_Enemy:
+                    return "You Will Spawn a Enemy";
+                case ToggleTypeHost.Revive_All_Players:
+                    return "You Will Revive All Players";
+                default:
+                    return "";
+            }
         }
         private void DrawPlayerListTab()
         {
@@ -100,7 +160,7 @@ namespace LethalCompanyMenu.MainMenu
             GUILayout.Label("Speed: " + SpeedOptions[SpeedSelection]);
             SpeedSelection = (int)GUILayout.HorizontalSlider(SpeedSelection, 0, SpeedOptions.Length - 1);
             Speed = SpeedValues[SpeedSelection];
-
+            Render.ColorPicker("Theme", ref c_Theme);
             GUILayout.EndScrollView();
         }
         public void Update()
@@ -108,17 +168,16 @@ namespace LethalCompanyMenu.MainMenu
             GUIToggleCheck();
             _playerManager.UpdatePlayers();
             playerControllerHandler.Update();
+            Render.Reset();
+            buttonActive = Render.Instance.CreateTexture(c_Theme);
+            buttonHovered = Render.Instance.CreateTexture(c_Theme);
         }
-        #region Main GUI
         private void OnGUI()
         {
             GUI.skin = GUI.skin ?? new GUISkin();
-            UpdateStyles();
+            Render.Instance.UpdateStyles();
             Update();
-            if (toggled)
-            {
-                GUIRect = GUI.Window(69, GUIRect, OnGUI, "Lethal Company GUI | Toggle: " + toggleKey);
-            }
+            if (toggled) { GUIRect = GUI.Window(69, GUIRect, OnGUI, "Lethal Company GUI | Toggle: " + toggleKey); }
         }
         public static void OnGUI(int windowId)
         {
@@ -130,19 +189,19 @@ namespace LethalCompanyMenu.MainMenu
 
             if (selectedTab == 0)
             {
-                _instance.DrawSelfTab();
+                Instance.DrawTab(Instance.ToggleSelf, Instance.GetTooltip<ToggleTypeSelf>);
             }
             else if (selectedTab == 1)
             {
-                _instance.DrawServerTab();
+                Instance.DrawTab(Instance.ToggleServer, Instance.GetTooltip<ToggleTypeServer>);
             }
             else if (selectedTab == 2)
             {
-                _instance.DrawVisualsTab();
+                Instance.DrawTab(Instance.ToggleVisuals, Instance.GetTooltip<ToggleTypeVisuals>);
             }
             else if (selectedTab == 3)
             {
-                _instance.DrawHostTab();
+                Instance.DrawTab(Instance.ToggleHost, Instance.GetTooltip<ToggleTypeHost>);
             }
             else if (selectedTab == 4)
             {
@@ -155,6 +214,7 @@ namespace LethalCompanyMenu.MainMenu
 
             GUILayout.EndArea();
             GUI.DragWindow(new Rect(0, 0, GUIRect.width, 20));
+            Render.RenderTooltip();
         }
         private void GUIToggleCheck()
         {
@@ -175,7 +235,7 @@ namespace LethalCompanyMenu.MainMenu
             {
                 if (selectedTab == i)
                 {
-                    GUIStyle selectedStyle = Instance.CreateButtonStyle(Instance.buttonActive, Instance.buttonHovered, Instance.buttonActive);
+                    GUIStyle selectedStyle = Render.Instance.CreateButtonStyle(Instance.buttonActive, Instance.buttonHovered, Instance.buttonActive);
                     if (GUILayout.Button(tabNames[i], selectedStyle))
                     {
                         selectedTab = i;
@@ -183,7 +243,7 @@ namespace LethalCompanyMenu.MainMenu
                 }
                 else
                 {
-                    GUIStyle unselectedStyle = Instance.CreateButtonStyle(Instance.button, Instance.buttonHovered, Instance.buttonActive);
+                    GUIStyle unselectedStyle = Render.Instance.CreateButtonStyle(Instance.button, Instance.buttonHovered, Instance.buttonActive);
                     if (GUILayout.Button(tabNames[i], unselectedStyle))
                     {
                         selectedTab = i;
@@ -193,103 +253,53 @@ namespace LethalCompanyMenu.MainMenu
 
             GUILayout.EndHorizontal();
         }
-        private bool ToggleButton(string text, bool toggle)
+        private bool ToggleButton(string text, bool toggle, string Tooltip = "")
         {
-            GUIStyle buttonStyle = CreateButtonStyle(toggle ? buttonActive : button, buttonHovered, buttonActive);
-
-            if (GUILayout.Button(text, buttonStyle))
+            GUIStyle buttonStyle = Render.Instance.CreateButtonStyle(toggle ? buttonActive : button, buttonHovered, buttonActive);
+            if (GUILayout.Button(text, buttonStyle)) { return !toggle; }
+            if (GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition))
             {
-                return !toggle;
+                strTooltip = Tooltip;
             }
-
             return toggle;
         }
-        #region Styles
         private void Awake()
         {
+            ToggleSelf = Enum.GetValues(typeof(ToggleTypeSelf)).Cast<ToggleTypeSelf>().ToDictionary(t => t, t => false);
+            ToggleServer = Enum.GetValues(typeof(ToggleTypeServer)).Cast<ToggleTypeServer>().ToDictionary(t => t, t => false);
+            ToggleVisuals = Enum.GetValues(typeof(ToggleTypeVisuals)).Cast<ToggleTypeVisuals>().ToDictionary(t => t, t => false);
+            ToggleHost = Enum.GetValues(typeof(ToggleTypeHost)).Cast<ToggleTypeHost>().ToDictionary(t => t, t => false);
             _playerManager = new PlayerManager();
             playerControllerHandler = new PlayerControllerHandler();
             _instance = this;
-            button = CreateTexture(new Color32(64, 64, 64, 255));
-            buttonHovered = CreateTexture(new Color32(75, 75, 75, 255));
-            buttonActive = CreateTexture(new Color32(100, 100, 100, 255));
-            windowBackground = CreateTexture(new Color32(30, 30, 30, 255));
-            textArea = CreateTexture(new Color32(64, 64, 64, 255));
-            textAreaHovered = CreateTexture(new Color32(75, 75, 75, 255));
-            textAreaActive = CreateTexture(new Color32(100, 100, 100, 255));
-            box = CreateTexture(new Color32(40, 40, 40, 255));
-        }
-        private void UpdateStyles()
-        {
-            GUI.skin.button = CreateButtonStyle(button, buttonHovered, buttonActive);
-            GUI.skin.window = CreateWindowStyle(windowBackground);
-            GUI.skin.textArea = CreateTextFieldStyle(textArea, textAreaHovered, textAreaActive);
-            GUI.skin.textField = CreateTextFieldStyle(textArea, textAreaHovered, textAreaActive);
-            GUI.skin.box = CreateBoxStyle(box);
-        }
-        public Texture2D CreateTexture(Color32 color)
-        {
-            Texture2D texture = new Texture2D(1, 1);
-            texture.SetPixel(0, 0, color);
-            texture.Apply();
-            return texture;
-        }
-        public GUIStyle CreateButtonStyle(Texture2D normal, Texture2D hover, Texture2D active)
-        {
-            GUIStyle style = new GUIStyle(GUI.skin.button);
-            style.normal.background = normal;
-            style.hover.background = hover;
-            style.active.background = active;
-            style.normal.textColor = Color.white;
-            style.hover.textColor = Color.white;
-            style.active.textColor = Color.white;
-            return style;
-        }
-        public GUIStyle CreateWindowStyle(Texture2D background)
-        {
-            GUIStyle style = new GUIStyle(GUI.skin.window);
-            style.normal.background = background;
-            style.onNormal.background = background;
-            style.normal.textColor = Color.white;
-            style.onNormal.textColor = Color.white;
-            return style;
-        }
-        public GUIStyle CreateTextFieldStyle(Texture2D normal, Texture2D hover, Texture2D active)
-        {
-            GUIStyle style = new GUIStyle(GUI.skin.textField);
-            style.normal.background = normal;
-            style.hover.background = hover;
-            style.active.background = active;
-            style.focused.background = active;
-            style.normal.textColor = Color.white;
-            style.hover.textColor = Color.white;
-            style.active.textColor = Color.white;
-            style.focused.textColor = Color.white;
-            return style;
-        }
-        public GUIStyle CreateBoxStyle(Texture2D normal)
-        {
-            GUIStyle style = new GUIStyle(GUI.skin.box);
-            style.normal.background = normal;
-            style.hover.background = normal;
-            style.active.background = normal;
-            style.normal.textColor = Color.white;
-            style.hover.textColor = Color.white;
-            style.active.textColor = Color.white;
-            return style;
+            if (didit)
+            {
+                c_Theme = new Color32(75, 75, 75, 255);
+                buttonActive = Render.Instance.CreateTexture(new Color32(100, 100, 100, 255));
+                buttonHovered = Render.Instance.CreateTexture(new Color32(75, 75, 75, 255));
+                button = Render.Instance.CreateTexture(new Color32(64, 64, 64, 255));
+                windowBackground = Render.Instance.CreateTexture(new Color32(30, 30, 30, 255));
+                textArea = Render.Instance.CreateTexture(new Color32(64, 64, 64, 255));
+                textAreaHovered = Render.Instance.CreateTexture(new Color32(75, 75, 75, 255));
+                textAreaActive = Render.Instance.CreateTexture(new Color32(100, 100, 100, 255));
+                box = Render.Instance.CreateTexture(new Color32(40, 40, 40, 255));
+                didit = false;
+            }
         }
         #endregion
-        #endregion
-        internal static bool nightVision, enableGod;
         #region Field
         // Textures
         public Texture2D button, buttonHovered, buttonActive, windowBackground, textArea, textAreaHovered, textAreaActive, box;
         public GameObject directionalLightClone;
+        internal static bool nightVision;
         public PlayerControllerHandler playerControllerHandler;
         public static PlayerManager _playerManager;
         public Dictionary<Type, List<Component>> objectCache = new Dictionary<Type, List<Component>>();
         public bool joining = false;
+        public bool didit = true;
         public bool shouldSpawnEnemy;
+        public static string strTooltip = null;
+        public static Color c_Theme;
         public AudioReverbTrigger currentAudioTrigger;
         public KeyCode toggleKey = KeyCode.Insert;
         public int numberDeadLastRound;
@@ -314,12 +324,12 @@ namespace LethalCompanyMenu.MainMenu
         public static SelectableLevel currentLevel;
         public static Rect GUIRect = new Rect(0, 0, 540, 240);
         public static int selectedTab = 0;
-        public static readonly string[] tabNames = { "Self Tab", "Server Tab", "Visuals Tab", "Host", "Player List", "Settings" };
+        public static readonly string[] tabNames = { "Self Tab", "Server Tab", "Visuals", "Host & World Tab", "Player List", "Settings" };
         public bool[] TogglePlayerList = new bool[999];
-        public bool[] ToggleSelf = new bool[999];
-        public bool[] ToggleServer = new bool[999];
-        public bool[] ToggleVisuals = new bool[999];
-        public bool[] ToggleHost = new bool[999];
+        public Dictionary<ToggleTypeSelf, bool> ToggleSelf = new Dictionary<ToggleTypeSelf, bool>();
+        public Dictionary<ToggleTypeServer, bool> ToggleServer = new Dictionary<ToggleTypeServer, bool>();
+        public Dictionary<ToggleTypeVisuals, bool> ToggleVisuals = new Dictionary<ToggleTypeVisuals, bool>();
+        public Dictionary<ToggleTypeHost, bool> ToggleHost = new Dictionary<ToggleTypeHost, bool>();
         public bool toggled = true;
         public PlayerControllerB selectedPlayer;
         internal static float nightVisionIntensity, nightVisionRange;
@@ -353,6 +363,7 @@ namespace LethalCompanyMenu.MainMenu
             {
                 GameObject Loader = new GameObject("Loader");
                 Loader.AddComponent<LocalPlayer>();
+                Loader.AddComponent<Render>();
                 Loader.AddComponent<MainGUI>();
             }
         }
